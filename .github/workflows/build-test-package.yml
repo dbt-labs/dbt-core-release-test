@@ -161,7 +161,7 @@ jobs:
           dbt --version
 
   publish-github-release:
-    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@master
+    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@main
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
