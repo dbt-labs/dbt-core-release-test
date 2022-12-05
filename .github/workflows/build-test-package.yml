@@ -10,13 +10,15 @@
 name: Build, Test, and Package
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       sha:
         description: "The last commit sha in the release"
+        type: string
         required: true
       version_number:
         description: "The release version number (i.e. 1.0.0b1)"
+        type: string
         required: true
 
 permissions:
@@ -40,13 +42,13 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           ref: ${{ github.event.inputs.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -61,19 +63,19 @@ jobs:
         run: tox
 
   build:
-    name: build packages
+    name: Build packages
 
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out the repository - ${{ inputs.sha }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
           ref: ${{ inputs.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -98,7 +100,7 @@ jobs:
           check-wheel-contents dist/*.whl --ignore W007,W008
 
       - name: Upload build artifact - ${{ inputs.version_number }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ inputs.version_number }}
           path: |
@@ -107,15 +109,15 @@ jobs:
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
 
   test-build:
-    name: verify packages
+    name: Verify packages
 
-    needs: [build, unit]
+    needs: [unit, build]
 
     runs-on: ubuntu-latest
 
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -126,7 +128,7 @@ jobs:
           pip --version
 
       - name: Download build artifact - ${{ inputs.version_number }}
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ inputs.version_number }}
           path: dist/
