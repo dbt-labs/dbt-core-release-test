@@ -10,13 +10,15 @@
 name: Build, Test, and Package
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       sha:
         description: "The last commit sha in the release"
+        type: string
         required: true
       version_number:
         description: "The release version number (i.e. 1.0.0b1)"
+        type: string
         required: true
 
 permissions:
