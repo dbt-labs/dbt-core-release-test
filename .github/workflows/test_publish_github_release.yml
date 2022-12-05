@@ -26,17 +26,28 @@ on:
         required: false
 
 jobs:
+  log-workflow-inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print variables
+        run: |
+          echo Build, test, verify and publish build artifact: ${{ inputs.generate_build_artifact }}
+          echo The last commit sha in the release: ${{ inputs.sha }}
+          echo The release version number: ${{ inputs.version_number }}
+          echo Expected Changlog path: ${{ inputs.changelog_path }}
+          echo Launch test run: ${{ inputs.dry_run }}
+
   build-test-verify-publish-package:
-    if: if inputs.generate_build_artifact == 'true'
-    uses: dbt-labs/dbt-core-release-test/.github/workflows/build-test-package.yml@users/alexander-smolyakov/fix-github-release-workflow
+    if: inputs.generate_build_artifact
+    uses: dbt-labs/dbt-core-release-test/.github/workflows/build-test-package.yml@main
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
-  
+
   publish-github-release:
-    if: ${{ always() }}
+    if: ${{ always() && !cancelled() }}
     needs: [build-test-verify-publish-package]
-    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@users/alexander-smolyakov/fix-github-release-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@main
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
