@@ -161,7 +161,7 @@ jobs:
           dbt --version
 
   publish-github-release:
-    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@users/alexander-smolyakov/fix-github-release-workflow
     needs: [unit, build, test-build]
     with:
       sha: ${{ inputs.sha }}
