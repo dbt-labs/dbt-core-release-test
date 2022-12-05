@@ -166,4 +166,4 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       changelog_path: ${{ inputs.changelog_path }}
-      testing: ${{ inputs.dry_run }
+      testing: ${{ inputs.dry_run }}
