@@ -28,11 +28,11 @@ on:
 jobs:
   build-test-verify-publish-package:
     if: if inputs.generate_build_artifact == 'true'
-    uses: dbt-labs/dbt-core-release-test/.github/workflows/build-verify-publish-package.yml@users/alexander-smolyakov/fix-github-release-workflow
+    uses: dbt-labs/dbt-core-release-test/.github/workflows/build-test-package.yml@users/alexander-smolyakov/fix-github-release-workflow
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
-
+  
   publish-github-release:
     if: ${{ always() }}
     needs: [build-test-verify-publish-package]
