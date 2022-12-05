@@ -27,7 +27,7 @@ on:
 
 jobs:
   build-test-verify-publish-package:
-    if: ${{ inputs.generate_build_artifact == 'true' }}
+    if: ${{ inputs.generate-release-notes == 'true' && 'true' || 'false' }}
     uses: dbt-labs/dbt-core-release-test/.github/workflows/build-verify-publish-package.yml@users/alexander-smolyakov/add-publish-github-release-stage
     with:
       sha: ${{ inputs.sha }}
