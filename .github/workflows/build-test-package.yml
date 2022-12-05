@@ -18,6 +18,16 @@ on:
       version_number:
         description: "The release version number (i.e. 1.0.0b1)"
         required: true
+      changelog_path:
+        description: "Path to changes log"
+        type: string
+        default: "./CHANGELOG.md"
+        required: false
+      dry_run:
+        description: "Launch test run"
+        type: boolean
+        default: true
+        required: false
 
 permissions:
   contents: write # this is the permission that allows creating a new release
@@ -149,3 +159,11 @@ jobs:
       - name: Check source distributions
         run: |
           dbt --version
+
+  publish-github-release:
+    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@master
+    with:
+      sha: ${{ inputs.sha }}
+      version_number: ${{ inputs.version_number }}
+      changelog_path: ${{ inputs.changelog_path }}
+      testing: ${{ inputs.dry_run }
