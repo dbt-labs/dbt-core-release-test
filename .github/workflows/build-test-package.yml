@@ -27,14 +27,14 @@ on:
 
 jobs:
   build-test-verify-publish-package:
-    if: ${{ inputs.generate_build_artifact == 'true' && 'true' || 'false' }}
+    if: inputs.generate_build_artifact
     uses: dbt-labs/dbt-core-release-test/.github/workflows/build-verify-publish-package.yml@users/alexander-smolyakov/add-publish-github-release-stage
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
 
   publish-github-release:
-    if: ${{ always() }}
+    if: ${{ always() && !cancelled() }}
     needs: [build-test-verify-publish-package]
     uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@users/alexander-smolyakov/fix-github-release-workflow
     with:
