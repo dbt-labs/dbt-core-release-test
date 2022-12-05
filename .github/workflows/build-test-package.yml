@@ -56,7 +56,7 @@ jobs:
           ref: ${{ github.event.inputs.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -71,7 +71,7 @@ jobs:
         run: tox
 
   build:
-    name: build packages
+    name: Build packages
 
     runs-on: ubuntu-latest
 
@@ -83,7 +83,7 @@ jobs:
           ref: ${{ inputs.sha }}
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -117,7 +117,7 @@ jobs:
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
 
   test-build:
-    name: verify packages
+    name: Verify packages
 
     needs: [unit, build]
 
@@ -125,7 +125,7 @@ jobs:
 
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
