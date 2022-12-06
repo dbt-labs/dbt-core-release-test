@@ -47,9 +47,17 @@ jobs:
   publish-github-release:
     if: ${{ always() && !cancelled() }}
     needs: [build-test-verify-publish-package]
-    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@users/alexander-smolyakov/github-workflow-improvments
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       changelog_path: ${{ inputs.changelog_path }}
       testing: ${{ inputs.dry_run }}
+  
+  log-workflow-outputs:
+    needs: [publish-github-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print variables
+        run: |
+          echo Tag: ${{ needs.publish-github-release.outputs.tag }}
