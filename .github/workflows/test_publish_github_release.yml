@@ -19,7 +19,7 @@ on:
         type: string
         default: "./CHANGELOG.md"
         required: false
-      dry_run:
+      test_run:
         description: "Launch test run"
         type: boolean
         default: true
@@ -35,7 +35,7 @@ jobs:
           echo The last commit sha in the release: ${{ inputs.sha }}
           echo The release version number: ${{ inputs.version_number }}
           echo Expected Changlog path: ${{ inputs.changelog_path }}
-          echo Launch test run: ${{ inputs.dry_run }}
+          echo Launch test run: ${{ inputs.test_run }}
 
   build-test-verify-publish-package:
     if: inputs.generate_build_artifact
@@ -52,7 +52,7 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       changelog_path: ${{ inputs.changelog_path }}
-      test_run: ${{ inputs.dry_run }}
+      test_run: ${{ inputs.test_run }}
 
   log-workflow-outputs:
     if: ${{ !failure() && !cancelled() }}
