@@ -52,8 +52,8 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       changelog_path: ${{ inputs.changelog_path }}
-      testing: ${{ inputs.dry_run }}
-  
+      test_run: ${{ inputs.dry_run }}
+
   log-workflow-outputs:
     needs: [publish-github-release]
     runs-on: ubuntu-latest
