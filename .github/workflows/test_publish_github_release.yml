@@ -55,7 +55,7 @@ jobs:
       test_run: ${{ inputs.dry_run }}
 
   log-workflow-outputs:
-    if: ${{ !failure() && !canceled() }}
+    if: ${{ !failure() && !cancelled() }}
     needs: [publish-github-release]
     runs-on: ubuntu-latest
     steps:
