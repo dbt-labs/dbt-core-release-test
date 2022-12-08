@@ -47,7 +47,7 @@ jobs:
   publish-github-release:
     if: ${{ always() && !cancelled() }}
     needs: [build-test-verify-publish-package]
-    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
