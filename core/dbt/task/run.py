@@ -17,9 +17,8 @@ from dbt import utils
 from dbt.adapters.base import BaseRelation
 from dbt.clients.jinja import MacroGenerator
 from dbt.context.providers import generate_runtime_model_context
-from dbt.contracts.graph.compiled import CompileResultNode
 from dbt.contracts.graph.model_config import Hook
-from dbt.contracts.graph.parsed import ParsedHookNode
+from dbt.contracts.graph.nodes import HookNode, ResultNode
 from dbt.contracts.results import NodeStatus, RunResult, RunStatus, RunningStatus, BaseResult
 from dbt.exceptions import (
     CompilationException,
@@ -79,17 +78,17 @@ class BiggestName(str):
         return isinstance(other, self.__class__)
 
 
-def _hook_list() -> List[ParsedHookNode]:
+def _hook_list() -> List[HookNode]:
     return []
 
 
 def get_hooks_by_tags(
-    nodes: Iterable[CompileResultNode],
+    nodes: Iterable[ResultNode],
     match_tags: Set[str],
-) -> List[ParsedHookNode]:
+) -> List[HookNode]:
     matched_nodes = []
     for node in nodes:
-        if not isinstance(node, ParsedHookNode):
+        if not isinstance(node, HookNode):
             continue
         node_tags = node.tags
         if len(set(node_tags) & match_tags):
@@ -304,20 +303,20 @@ class RunTask(CompileTask):
         hook_obj = get_hook(statement, index=hook_index)
         return hook_obj.sql or ""
 
-    def _hook_keyfunc(self, hook: ParsedHookNode) -> Tuple[str, Optional[int]]:
+    def _hook_keyfunc(self, hook: HookNode) -> Tuple[str, Optional[int]]:
         package_name = hook.package_name
         if package_name == self.config.project_name:
             package_name = BiggestName("")
         return package_name, hook.index
 
-    def get_hooks_by_type(self, hook_type: RunHookType) -> List[ParsedHookNode]:
+    def get_hooks_by_type(self, hook_type: RunHookType) -> List[HookNode]:
 
         if self.manifest is None:
             raise InternalException("self.manifest was None in get_hooks_by_type")
 
         nodes = self.manifest.nodes.values()
         # find all hooks defined in the manifest (could be multiple projects)
-        hooks: List[ParsedHookNode] = get_hooks_by_tags(nodes, {hook_type})
+        hooks: List[HookNode] = get_hooks_by_tags(nodes, {hook_type})
         hooks.sort(key=self._hook_keyfunc)
         return hooks
 
@@ -340,8 +339,9 @@ class RunTask(CompileTask):
         finishctx = TimestampNamed("node_finished_at")
 
         for idx, hook in enumerate(ordered_hooks, start=1):
-            hook._event_status["started_at"] = datetime.utcnow().isoformat()
-            hook._event_status["node_status"] = RunningStatus.Started
+            hook.update_event_status(
+                started_at=datetime.utcnow().isoformat(), node_status=RunningStatus.Started
+            )
             sql = self.get_hook_sql(adapter, hook, idx, num_hooks, extra_context)
 
             hook_text = "{}.{}.{}".format(hook.package_name, hook_type, hook.index)
@@ -365,9 +365,9 @@ class RunTask(CompileTask):
                         status = "OK"
 
                 self.ran_hooks.append(hook)
-                hook._event_status["finished_at"] = datetime.utcnow().isoformat()
+                hook.update_event_status(finished_at=datetime.utcnow().isoformat())
                 with finishctx, DbtModelState({"node_status": "passed"}):
-                    hook._event_status["node_status"] = RunStatus.Success
+                    hook.update_event_status(node_status=RunStatus.Success)
                     fire_event(
                         LogHookEndLine(
                             statement=hook_text,
@@ -380,9 +380,7 @@ class RunTask(CompileTask):
                     )
             # `_event_status` dict is only used for logging.  Make sure
             # it gets deleted when we're done with it
-            del hook._event_status["started_at"]
-            del hook._event_status["finished_at"]
-            del hook._event_status["node_status"]
+            hook.clear_event_status()
 
         self._total_executed += len(ordered_hooks)
 

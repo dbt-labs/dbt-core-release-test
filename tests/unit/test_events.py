@@ -1,7 +1,7 @@
 # flake8: noqa
 from dbt.events.test_types import UnitTestInfo
 from dbt.events import AdapterLogger
-from dbt.events.functions import event_to_json, LOG_VERSION, reset_event_history, event_to_dict
+from dbt.events.functions import event_to_json, LOG_VERSION, event_to_dict
 from dbt.events.types import *
 from dbt.events.test_types import *
 
@@ -19,7 +19,7 @@ import dbt.events.functions as event_funcs
 import dbt.flags as flags
 import inspect
 import json
-from dbt.contracts.graph.parsed import ParsedModelNode, NodeConfig, DependsOn
+from dbt.contracts.graph.nodes import ModelNode, NodeConfig, DependsOn
 from dbt.contracts.files import FileHash
 from mashumaro.types import SerializableType
 from typing import Generic, TypeVar, Dict
@@ -102,30 +102,8 @@ class TestEventCodes:
             all_codes.add(code)
 
 
-class TestEventBuffer:
-    def setUp(self) -> None:
-        flags.EVENT_BUFFER_SIZE = 10
-        reload(event_funcs)
-
-    # ensure events are populated to the buffer exactly once
-    def test_buffer_populates(self):
-        self.setUp()
-        event_funcs.fire_event(UnitTestInfo(msg="Test Event 1"))
-        event_funcs.fire_event(UnitTestInfo(msg="Test Event 2"))
-        event1 = event_funcs.EVENT_HISTORY[-2]
-        assert event_funcs.EVENT_HISTORY.count(event1) == 1
-
-    # ensure events drop from the front of the buffer when buffer maxsize is reached
-    def test_buffer_FIFOs(self):
-        reset_event_history()
-        event_funcs.EVENT_HISTORY.clear()
-        for n in range(1, (flags.EVENT_BUFFER_SIZE + 2)):
-            event_funcs.fire_event(UnitTestInfo(msg=f"Test Event {n}"))
-        assert event_funcs.EVENT_HISTORY.count(UnitTestInfo(msg="Test Event 1")) == 0
-
-
 def MockNode():
-    return ParsedModelNode(
+    return ModelNode(
         alias="model_one",
         name="model_one",
         database="dbt",
@@ -421,14 +399,13 @@ sample_values = [
     ),
     LogCancelLine(conn_name=""),
     DefaultSelector(name=""),
-    NodeStart(unique_id=""),
-    NodeFinished(unique_id=""),
+    NodeStart(node_info=NodeInfo()),
+    NodeFinished(node_info=NodeInfo()),
     QueryCancelationUnsupported(type=""),
     ConcurrencyLine(num_threads=0, target_name=""),
-    CompilingNode(unique_id=""),
-    WritingInjectedSQLForNode(unique_id=""),
-    NodeCompiling(unique_id=""),
-    NodeExecuting(unique_id=""),
+    WritingInjectedSQLForNode(node_info=NodeInfo()),
+    NodeCompiling(node_info=NodeInfo()),
+    NodeExecuting(node_info=NodeInfo()),
     LogHookStartLine(
         statement="",
         index=0,
@@ -505,7 +482,6 @@ sample_values = [
     FlushEvents(),
     FlushEventsFailure(),
     TrackingInitializeFailure(),
-    EventBufferFull(),
     RunResultWarningMessage(),
 
     # T - tests ======================
@@ -517,6 +493,8 @@ sample_values = [
     UnitTestInfo(),
 
 ]
+
+
 
 
 class TestEventJSONSerialization:

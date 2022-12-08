@@ -1,6 +1,6 @@
 import json
 
-from dbt.contracts.graph.parsed import ParsedExposure, ParsedSourceDefinition, ParsedMetric
+from dbt.contracts.graph.nodes import Exposure, SourceDefinition, Metric
 from dbt.graph import ResourceTypeSelector
 from dbt.task.runnable import GraphRunnableTask, ManifestTask
 from dbt.task.test import TestSelector
@@ -9,8 +9,7 @@ from dbt.events.functions import warn_or_error
 from dbt.events.types import NoNodesSelected
 from dbt.exceptions import RuntimeException, InternalException
 from dbt.logger import log_manager
-import logging
-import dbt.events.functions as event_logger
+from dbt.events.eventmgr import EventLevel
 
 
 class ListTask(GraphRunnableTask):
@@ -62,9 +61,8 @@ class ListTask(GraphRunnableTask):
         #  - mutating the initialized, not-yet-configured STDOUT event logger
         #    because it's being configured too late -- bad! TODO refactor!
         log_manager.stderr_console()
-        event_logger.STDOUT_LOG.level = logging.WARN
         super().pre_init_hook(args)
-        return logging.WARN
+        return EventLevel.WARN
 
     def _iterate_selected_nodes(self):
         selector = self.get_node_selector()
@@ -93,17 +91,17 @@ class ListTask(GraphRunnableTask):
     def generate_selectors(self):
         for node in self._iterate_selected_nodes():
             if node.resource_type == NodeType.Source:
-                assert isinstance(node, ParsedSourceDefinition)
+                assert isinstance(node, SourceDefinition)
                 # sources are searched for by pkg.source_name.table_name
                 source_selector = ".".join([node.package_name, node.source_name, node.name])
                 yield f"source:{source_selector}"
             elif node.resource_type == NodeType.Exposure:
-                assert isinstance(node, ParsedExposure)
+                assert isinstance(node, Exposure)
                 # exposures are searched for by pkg.exposure_name
                 exposure_selector = ".".join([node.package_name, node.name])
                 yield f"exposure:{exposure_selector}"
             elif node.resource_type == NodeType.Metric:
-                assert isinstance(node, ParsedMetric)
+                assert isinstance(node, Metric)
                 # metrics are searched for by pkg.metric_name
                 metric_selector = ".".join([node.package_name, node.name])
                 yield f"metric:{metric_selector}"

@@ -15,14 +15,14 @@ from dbt import tracking
 from dbt.adapters.base.plugin import AdapterPlugin
 from dbt.contracts.files import FileHash
 from dbt.contracts.graph.manifest import Manifest, ManifestMetadata
-from dbt.contracts.graph.parsed import (
-    ParsedModelNode,
+from dbt.contracts.graph.nodes import (
+    ModelNode,
     DependsOn,
     NodeConfig,
-    ParsedSeedNode,
-    ParsedSourceDefinition,
-    ParsedExposure,
-    ParsedMetric
+    SeedNode,
+    SourceDefinition,
+    Exposure,
+    Metric
 )
 
 from dbt.contracts.graph.unparsed import (
@@ -33,7 +33,6 @@ from dbt.contracts.graph.unparsed import (
     MetricTime
 )
 
-from dbt.contracts.graph.compiled import CompiledModelNode
 from dbt.events.functions import reset_metadata_vars
 
 from dbt.node_types import NodeType
@@ -81,7 +80,7 @@ class ManifestTest(unittest.TestCase):
         })
 
         self.exposures = {
-            'exposure.root.my_exposure': ParsedExposure(
+            'exposure.root.my_exposure': Exposure(
                 name='my_exposure',
                 type=ExposureType.Dashboard,
                 owner=ExposureOwner(email='some@email.com'),
@@ -101,7 +100,7 @@ class ManifestTest(unittest.TestCase):
         }
 
         self.metrics = {
-            'metric.root.my_metric': ParsedMetric(
+            'metric.root.my_metric': Metric(
                 name='new_customers',
                 label='New Customers',
                 model='ref("multi")',
@@ -133,7 +132,7 @@ class ManifestTest(unittest.TestCase):
         }
 
         self.nested_nodes = {
-            'model.snowplow.events': ParsedModelNode(
+            'model.snowplow.events': ModelNode(
                 name='events',
                 database='dbt',
                 schema='analytics',
@@ -155,7 +154,7 @@ class ManifestTest(unittest.TestCase):
                 raw_code='does not matter',
                 checksum=FileHash.empty(),
             ),
-            'model.root.events': ParsedModelNode(
+            'model.root.events': ModelNode(
                 name='events',
                 database='dbt',
                 schema='analytics',
@@ -177,7 +176,7 @@ class ManifestTest(unittest.TestCase):
                 raw_code='does not matter',
                 checksum=FileHash.empty(),
             ),
-            'model.root.dep': ParsedModelNode(
+            'model.root.dep': ModelNode(
                 name='dep',
                 database='dbt',
                 schema='analytics',
@@ -199,7 +198,7 @@ class ManifestTest(unittest.TestCase):
                 raw_code='does not matter',
                 checksum=FileHash.empty(),
             ),
-            'model.root.nested': ParsedModelNode(
+            'model.root.nested': ModelNode(
                 name='nested',
                 database='dbt',
                 schema='analytics',
@@ -221,7 +220,7 @@ class ManifestTest(unittest.TestCase):
                 raw_code='does not matter',
                 checksum=FileHash.empty(),
             ),
-            'model.root.sibling': ParsedModelNode(
+            'model.root.sibling': ModelNode(
                 name='sibling',
                 database='dbt',
                 schema='analytics',
@@ -243,7 +242,7 @@ class ManifestTest(unittest.TestCase):
                 raw_code='does not matter',
                 checksum=FileHash.empty(),
             ),
-            'model.root.multi': ParsedModelNode(
+            'model.root.multi': ModelNode(
                 name='multi',
                 database='dbt',
                 schema='analytics',
@@ -268,7 +267,7 @@ class ManifestTest(unittest.TestCase):
         }
 
         self.sources = {
-            'source.root.my_source.my_table': ParsedSourceDefinition(
+            'source.root.my_source.my_table': SourceDefinition(
                 database='raw',
                 schema='analytics',
                 resource_type=NodeType.Source,
@@ -308,7 +307,7 @@ class ManifestTest(unittest.TestCase):
             metadata=ManifestMetadata(generated_at=datetime.utcnow()),
         )
 
-        invocation_id = dbt.events.functions.invocation_id
+        invocation_id = dbt.events.functions.EVENT_MANAGER.invocation_id
         self.assertEqual(
             manifest.writable_manifest().to_dict(omit_none=True),
             {
@@ -425,7 +424,7 @@ class ManifestTest(unittest.TestCase):
     @mock.patch.object(tracking, 'active_user')
     def test_metadata(self, mock_user):
         mock_user.id = 'cfc9500f-dc7f-4c83-9ea7-2c581c1b38cf'
-        dbt.events.functions.invocation_id = '01234567-0123-0123-0123-0123456789ab'
+        dbt.events.functions.EVENT_MANAGER.invocation_id = '01234567-0123-0123-0123-0123456789ab'
         dbt.flags.SEND_ANONYMOUS_USAGE_STATS = False
         now = datetime.utcnow()
         self.assertEqual(
@@ -448,7 +447,7 @@ class ManifestTest(unittest.TestCase):
     @freezegun.freeze_time('2018-02-14T09:15:13Z')
     def test_no_nodes_with_metadata(self, mock_user):
         mock_user.id = 'cfc9500f-dc7f-4c83-9ea7-2c581c1b38cf'
-        dbt.events.functions.invocation_id = '01234567-0123-0123-0123-0123456789ab'
+        dbt.events.functions.EVENT_MANAGER.invocation_id = '01234567-0123-0123-0123-0123456789ab'
         dbt.flags.SEND_ANONYMOUS_USAGE_STATS = False
         metadata = ManifestMetadata(
             project_id='098f6bcd4621d373cade4e832627b4f6',
@@ -493,7 +492,7 @@ class ManifestTest(unittest.TestCase):
 
     def test_get_resource_fqns(self):
         nodes = copy.copy(self.nested_nodes)
-        nodes['seed.root.seed'] = ParsedSeedNode(
+        nodes['seed.root.seed'] = SeedNode(
             name='seed',
             database='dbt',
             schema='analytics',
@@ -542,7 +541,7 @@ class ManifestTest(unittest.TestCase):
         self.assertEqual(resource_fqns, expect)
 
     def test__deepcopy_copies_flat_graph(self):
-        test_node = ParsedModelNode(
+        test_node = ModelNode(
                 name='events',
                 database='dbt',
                 schema='analytics',
@@ -586,7 +585,7 @@ class MixedManifestTest(unittest.TestCase):
         })
 
         self.nested_nodes = {
-            'model.snowplow.events': CompiledModelNode(
+            'model.snowplow.events': ModelNode(
                 name='events',
                 database='dbt',
                 schema='analytics',
@@ -612,7 +611,7 @@ class MixedManifestTest(unittest.TestCase):
                 extra_ctes=[],
                 checksum=FileHash.empty(),
             ),
-            'model.root.events': CompiledModelNode(
+            'model.root.events': ModelNode(
                 name='events',
                 database='dbt',
                 schema='analytics',
@@ -638,7 +637,7 @@ class MixedManifestTest(unittest.TestCase):
                 extra_ctes=[],
                 checksum=FileHash.empty(),
             ),
-            'model.root.dep': ParsedModelNode(
+            'model.root.dep': ModelNode(
                 name='dep',
                 database='dbt',
                 schema='analytics',
@@ -659,7 +658,7 @@ class MixedManifestTest(unittest.TestCase):
                 raw_code='does not matter',
                 checksum=FileHash.empty(),
             ),
-            'model.root.nested': ParsedModelNode(
+            'model.root.nested': ModelNode(
                 name='nested',
                 database='dbt',
                 schema='analytics',
@@ -680,7 +679,7 @@ class MixedManifestTest(unittest.TestCase):
                 raw_code='does not matter',
                 checksum=FileHash.empty(),
             ),
-            'model.root.sibling': ParsedModelNode(
+            'model.root.sibling': ModelNode(
                 name='sibling',
                 database='dbt',
                 schema='analytics',
@@ -701,7 +700,7 @@ class MixedManifestTest(unittest.TestCase):
                 raw_code='does not matter',
                 checksum=FileHash.empty(),
             ),
-            'model.root.multi': ParsedModelNode(
+            'model.root.multi': ModelNode(
                 name='multi',
                 database='dbt',
                 schema='analytics',

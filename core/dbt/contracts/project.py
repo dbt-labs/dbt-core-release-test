@@ -56,6 +56,12 @@ RawVersion = Union[str, float]
 
 
 @dataclass
+class TarballPackage(Package):
+    tarball: str
+    name: str
+
+
+@dataclass
 class GitPackage(Package):
     git: str
     revision: Optional[RawVersion] = None
@@ -82,7 +88,7 @@ class RegistryPackage(Package):
             return [str(self.version)]
 
 
-PackageSpec = Union[LocalPackage, GitPackage, RegistryPackage]
+PackageSpec = Union[LocalPackage, TarballPackage, GitPackage, RegistryPackage]
 
 
 @dataclass
@@ -251,7 +257,6 @@ class UserConfig(ExtensibleDbtClassMixin, Replaceable, UserConfigContract):
     static_parser: Optional[bool] = None
     indirect_selection: Optional[str] = None
     cache_selected_only: Optional[bool] = None
-    event_buffer_size: Optional[int] = None
 
 
 @dataclass

@@ -38,9 +38,9 @@ from dbt.events.types import (
     EndRunResult,
     NothingToDo,
 )
-from dbt.contracts.graph.compiled import CompileResultNode
+from dbt.events.contextvars import log_contextvars
 from dbt.contracts.graph.manifest import Manifest
-from dbt.contracts.graph.parsed import ParsedSourceDefinition
+from dbt.contracts.graph.nodes import SourceDefinition, ResultNode
 from dbt.contracts.results import NodeStatus, RunExecutionResult, RunningStatus
 from dbt.contracts.state import PreviousState
 from dbt.exceptions import (
@@ -107,7 +107,7 @@ class GraphRunnableTask(ManifestTask):
     def __init__(self, args, config):
         super().__init__(args, config)
         self.job_queue: Optional[GraphQueue] = None
-        self._flattened_nodes: Optional[List[CompileResultNode]] = None
+        self._flattened_nodes: Optional[List[ResultNode]] = None
 
         self.run_count: int = 0
         self.num_nodes: int = 0
@@ -205,41 +205,39 @@ class GraphRunnableTask(ManifestTask):
 
     def call_runner(self, runner):
         uid_context = UniqueID(runner.node.unique_id)
-        with RUNNING_STATE, uid_context:
+        with RUNNING_STATE, uid_context, log_contextvars(node_info=runner.node.node_info):
             startctx = TimestampNamed("node_started_at")
             index = self.index_offset(runner.node_index)
-            runner.node._event_status["started_at"] = datetime.utcnow().isoformat()
-            runner.node._event_status["node_status"] = RunningStatus.Started
+            runner.node.update_event_status(
+                started_at=datetime.utcnow().isoformat(), node_status=RunningStatus.Started
+            )
             extended_metadata = ModelMetadata(runner.node, index)
 
             with startctx, extended_metadata:
                 fire_event(
                     NodeStart(
                         node_info=runner.node.node_info,
-                        unique_id=runner.node.unique_id,
                     )
                 )
             status: Dict[str, str] = {}
             try:
                 result = runner.run_with_hooks(self.manifest)
                 status = runner.get_result_status(result)
-                runner.node._event_status["node_status"] = result.status
-                runner.node._event_status["finished_at"] = datetime.utcnow().isoformat()
+                runner.node.update_event_status(
+                    node_status=result.status, finished_at=datetime.utcnow().isoformat()
+                )
             finally:
                 finishctx = TimestampNamed("finished_at")
                 with finishctx, DbtModelState(status):
                     fire_event(
                         NodeFinished(
                             node_info=runner.node.node_info,
-                            unique_id=runner.node.unique_id,
                             run_result=result.to_msg(),
                         )
                     )
             # `_event_status` dict is only used for logging.  Make sure
             # it gets deleted when we're done with it
-            del runner.node._event_status["started_at"]
-            del runner.node._event_status["finished_at"]
-            del runner.node._event_status["node_status"]
+            runner.node.clear_event_status()
 
         fail_fast = flags.FAIL_FAST
 
@@ -331,7 +329,7 @@ class GraphRunnableTask(ManifestTask):
         if self.manifest is None:
             raise InternalException("manifest was None in _handle_result")
 
-        if isinstance(node, ParsedSourceDefinition):
+        if isinstance(node, SourceDefinition):
             self.manifest.update_source(node)
         else:
             self.manifest.update_node(node)
@@ -371,8 +369,13 @@ class GraphRunnableTask(ManifestTask):
         num_threads = self.config.threads
         target_name = self.config.target_name
 
+        # following line can be removed when legacy logger is removed
         with NodeCount(self.num_nodes):
-            fire_event(ConcurrencyLine(num_threads=num_threads, target_name=target_name))
+            fire_event(
+                ConcurrencyLine(
+                    num_threads=num_threads, target_name=target_name, node_count=self.num_nodes
+                )
+            )
         with TextOnly():
             fire_event(EmptyLine())
 
