@@ -25,7 +25,7 @@ on:
         default: "./CHANGELOG.md"
         required: false
       test_run:
-        description: "Launch test run"
+        description: "Test run (Publish release as draft)"
         type: boolean
         default: false
         required: false
