@@ -180,7 +180,7 @@ jobs:
 
     needs: test-build
 
-    uses: dbt-labs/dbt-release/.github/workflows/_github-release.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
 
     with:
       sha: ${{ inputs.sha }}
