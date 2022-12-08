@@ -42,6 +42,19 @@ defaults:
     shell: bash
 
 jobs:
+  log-inputs:
+    name: Log Inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: "[DEBUG] Print Variables"
+        run: |
+          echo The last commit sha in the release: ${{ inputs.sha }}
+          echo The release version number:         ${{ inputs.version_number }}
+          echo Expected Changlog path:             ${{ inputs.changelog_path }}
+          echo Test run:                           ${{ inputs.test_run }}
+          echo Python target version:              ${{ env.PYTHON_TARGET_VERSION }}
+          echo Artifact retention days:            ${{ env.ARTIFACT_RETENTION_DAYS }}
+
   unit:
     name: Unit Test
 
