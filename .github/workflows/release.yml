@@ -88,7 +88,7 @@ jobs:
   build-test-package:
     name: Build, Test, Package
 
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@users/alexander-smolyakov/update-build-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/build.yml@amin
 
     with:
       sha: ${{ inputs.sha }}
