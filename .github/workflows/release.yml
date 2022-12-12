@@ -107,6 +107,7 @@ jobs:
 
   github-release:
     name: GitHub Release
+    if: ${{ !failure() && !cancelled() }}
 
     needs: build-test-package
 
