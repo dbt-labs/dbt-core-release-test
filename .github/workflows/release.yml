@@ -101,6 +101,8 @@ jobs:
       check_build_exists: ${{ inputs.check_build_exists }}
       upload_artifacts_aws: ${{ inputs.upload_artifacts_aws }}
 
+    secrets: inherit
+
   github-release:
     name: GitHub Release
 
