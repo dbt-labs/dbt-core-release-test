@@ -80,7 +80,7 @@ jobs:
           echo Build script path:                  ${{ inputs.build_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
-          echo Check version changelog:            ${{ inputs.audit_version_changelog }} 
+          echo Check version changelog:            ${{ inputs.audit_version_changelog }}
           echo Check build exists:                 ${{ inputs.check_build_exists }}
           echo Upload build to AWS:                ${{ inputs.upload_artifacts_aws  }}
           echo Test run:                           ${{ inputs.test_run }}
@@ -104,7 +104,7 @@ jobs:
   github-release:
     name: GitHub Release
 
-    needs: test-build
+    needs: build-test-package
 
     uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
 
