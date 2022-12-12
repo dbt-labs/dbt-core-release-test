@@ -101,7 +101,9 @@ jobs:
       check_build_exists: ${{ inputs.check_build_exists }}
       upload_artifacts_aws: ${{ inputs.upload_artifacts_aws }}
 
-    secrets: inherit
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
 
   github-release:
     name: GitHub Release
