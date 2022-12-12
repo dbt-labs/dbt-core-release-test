@@ -34,14 +34,6 @@ on:
         type: string
         default: "core-team-artifacts"
         required: true
-      s3_artifact_folder:
-        description: "Folder for arifact"
-        type: choice
-        required: true
-        options:
-          - "artifacts"
-          - "artifacts_testing"
-        default: "artifacts"
       package_test_command:
         description: "Package test command"
         type: string
@@ -87,7 +79,6 @@ jobs:
           echo Expected Changlog path:             ${{ inputs.changelog_path }}
           echo Build script path:                  ${{ inputs.build_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
-          echo Folder for arifact:                 ${{ inputs.s3_artifact_folder }}
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Check version changelog:            ${{ inputs.audit_version_changelog }}
           echo Check build exists:                 ${{ inputs.check_build_exists }}
@@ -105,7 +96,6 @@ jobs:
       changelog_path: ${{ inputs.changelog_path }}
       build_script_path: ${{ inputs.build_script_path }}
       s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      s3_artifact_folder: ${{ inputs.s3_artifact_folder }}
       package_test_command: ${{ inputs.package_test_command }}
       audit_version_changelog: ${{ inputs.audit_version_changelog }}
       check_build_exists: ${{ inputs.check_build_exists }}
