@@ -100,6 +100,7 @@ jobs:
       audit_version_changelog: ${{ inputs.audit_version_changelog }}
       check_build_exists: ${{ inputs.check_build_exists }}
       upload_artifacts_aws: ${{ inputs.upload_artifacts_aws }}
+      test_run: ${{ inputs.test_run }}
 
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.PRODUCTION_AWS_ACCESS_KEY_ID }}
