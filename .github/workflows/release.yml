@@ -88,7 +88,7 @@ jobs:
   build-test-package:
     name: Build, Test, Package
 
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@users/alexander-smolyakov/build-workflow-add-unit-stage
+    uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
 
     with:
       sha: ${{ inputs.sha }}
