@@ -70,7 +70,7 @@ jobs:
   build-test-package:
     name: Build, Test, Package
 
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@users/alexander-smolyakov/cleanup-build-workflow-code
+    uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
 
     with:
       sha: ${{ inputs.sha }}
@@ -91,7 +91,7 @@ jobs:
 
     needs: build-test-package
 
-    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@users/alexander-smolyakov/cleanup-build-workflow-code
+    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
 
     with:
       sha: ${{ inputs.sha }}
