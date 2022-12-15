@@ -39,16 +39,6 @@ on:
         type: string
         default: "dbt --version"
         required: true
-      audit_version_changelog:
-        description: "Check version changelog"
-        type: boolean
-        default: false
-        required: false
-      check_build_exists:
-        description: "Check build exists"
-        type: boolean
-        default: false
-        required: false
       upload_artifacts_aws:
         description: "Upload build to AWS"
         required: false
@@ -80,9 +70,6 @@ jobs:
           echo Build script path:                  ${{ inputs.build_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
-          echo Check version changelog:            ${{ inputs.audit_version_changelog }}
-          echo Check build exists:                 ${{ inputs.check_build_exists }}
-          echo Upload build to AWS:                ${{ inputs.upload_artifacts_aws  }}
           echo Test run:                           ${{ inputs.test_run }}
 
   build-test-package:
@@ -97,9 +84,6 @@ jobs:
       build_script_path: ${{ inputs.build_script_path }}
       s3_bucket_name: ${{ inputs.s3_bucket_name }}
       package_test_command: ${{ inputs.package_test_command }}
-      audit_version_changelog: ${{ inputs.audit_version_changelog }}
-      check_build_exists: ${{ inputs.check_build_exists }}
-      upload_artifacts_aws: ${{ inputs.upload_artifacts_aws }}
       test_run: ${{ inputs.test_run }}
 
     secrets:
