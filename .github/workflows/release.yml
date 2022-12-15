@@ -39,11 +39,6 @@ on:
         type: string
         default: "dbt --version"
         required: true
-      upload_artifacts_aws:
-        description: "Upload build to AWS"
-        required: false
-        default: false
-        type: boolean
       test_run:
         description: "Test run (Publish release as draft)"
         type: boolean
