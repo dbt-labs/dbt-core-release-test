@@ -25,11 +25,6 @@ on:
         description: "The release version number (i.e. 1.0.0b1)"
         type: string
         required: true
-      changelog_path:
-        description: "Path to changes log"
-        type: string
-        default: "./CHANGELOG.md"
-        required: false
       build_script_path:
         description: "Build script path"
         type: string
@@ -78,7 +73,6 @@ jobs:
           echo The last commit sha in the release: ${{ inputs.sha }}
           echo The branch to release from:         ${{ inputs.target_branch }}
           echo The release version number:         ${{ inputs.version_number }}
-          echo Expected Changlog path:             ${{ inputs.changelog_path }}
           echo Build script path:                  ${{ inputs.build_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
