@@ -94,7 +94,7 @@ jobs:
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
-      target_branch: ${{ input.target_branch }}
+      target_branch: ${{ inputs.target_branch }}
 
   log-outputs-bump-version-generate-changelog:
     name: "[Log output] Bump package version, Generate changelog"
@@ -112,7 +112,7 @@ jobs:
 
   build-test-package:
     name: Build, Test, Package
-    if: ${{ input.test_build_package == true && (!failure() && !cancelled()) }}
+    if: ${{ inputs.test_build_package == true && (!failure() && !cancelled()) }}
     needs: [bump-version-generate-changelog]
 
     uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
@@ -132,7 +132,7 @@ jobs:
 
   github-release:
     name: GitHub Release
-    if: ${{ input.test_publish_release == true && (!failure() && !cancelled()) }}
+    if: ${{ inputs.test_publish_release == true && (!failure() && !cancelled()) }}
 
     needs: [bump-version-generate-changelog, build-test-package]
 
