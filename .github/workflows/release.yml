@@ -6,7 +6,7 @@
 # Ensure an automated and tested release process
 
 # **when?**
-# This will only run manually with a given sha and version
+# This will only run manually with a given sha, version, and changelog_path
 
 name: Release to GitHub and PyPi
 
@@ -15,15 +15,16 @@ on:
     inputs:
       sha:
         description: "The last commit sha in the release"
+        type: string
+        required: true
+      target_branch:
+        description: "The branch to release from"
+        type: string
         required: true
       version_number:
         description: "The release version number (i.e. 1.0.0b1)"
-        required: true
-      changelog_path:
-        description: "Path to changes log"
         type: string
-        default: "./CHANGELOG.md"
-        required: false
+        required: true
       build_script_path:
         description: "Build script path"
         type: string
@@ -44,6 +45,16 @@ on:
         type: boolean
         default: false
         required: false
+      test_build_package:
+        description: "[Test] Build package"
+        type: boolean
+        default: false
+        required: false
+      test_publish_release:
+        description: "[Test] Publish package"
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: write # this is the permission that allows creating a new release
@@ -60,22 +71,50 @@ jobs:
       - name: "[DEBUG] Print Variables"
         run: |
           echo The last commit sha in the release: ${{ inputs.sha }}
+          echo The branch to release from:         ${{ inputs.target_branch }}
           echo The release version number:         ${{ inputs.version_number }}
-          echo Expected Changlog path:             ${{ inputs.changelog_path }}
           echo Build script path:                  ${{ inputs.build_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Test run:                           ${{ inputs.test_run }}
+          echo [Test] Build package:               ${{ inputs.test_build_package }}
+          echo [Test] Publish package:             ${{ inputs.test_publish_release }}
 
-  build-test-package:
-    name: Build, Test, Package
+  bump-version-generate-changelog:
+    name: Bump package version, Generate changelog
 
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@main
 
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ inputs.changelog_path }}
+      target_branch: ${{ inputs.target_branch }}
+
+  log-outputs-bump-version-generate-changelog:
+    name: "[Log output] Bump package version, Generate changelog"
+    if: ${{ !failure() && !cancelled() }}
+
+    needs: [bump-version-generate-changelog]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print variables
+        run: |
+          echo Final SHA     : ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+          echo Changelog path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+
+  build-test-package:
+    name: Build, Test, Package
+    if: ${{ inputs.test_build_package == true && (!failure() && !cancelled()) }}
+    needs: [bump-version-generate-changelog]
+
+    uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
+
+    with:
+      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+      version_number: ${{ inputs.version_number }}
+      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
       build_script_path: ${{ inputs.build_script_path }}
       s3_bucket_name: ${{ inputs.s3_bucket_name }}
       package_test_command: ${{ inputs.package_test_command }}
@@ -87,16 +126,16 @@ jobs:
 
   github-release:
     name: GitHub Release
-    if: ${{ !failure() && !cancelled() }}
+    if: ${{ inputs.test_publish_release == true && (!failure() && !cancelled()) }}
 
-    needs: build-test-package
+    needs: [bump-version-generate-changelog, build-test-package]
 
     uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
 
     with:
-      sha: ${{ inputs.sha }}
+      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
       version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ inputs.changelog_path }}
+      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
       test_run: ${{ inputs.test_run }}
 
   pypi-release:
