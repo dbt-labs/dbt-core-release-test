@@ -83,7 +83,7 @@ jobs:
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
 
-    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@users/alexander-smolyakov/update-release-prep-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@main
 
     with:
       sha: ${{ inputs.sha }}
