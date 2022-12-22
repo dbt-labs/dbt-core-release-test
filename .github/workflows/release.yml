@@ -30,6 +30,11 @@ on:
         type: string
         default: "scripts/build-dist.sh"
         required: true
+      env_setup_script_path:
+        description: "Enviroment setup script path"
+        type: string
+        default: "scripts/env-setup.sh"
+        required: true
       s3_bucket_name:
         description: "AWS S3 bucket name"
         type: string
@@ -64,6 +69,7 @@ jobs:
           echo The branch to release from:         ${{ inputs.target_branch }}
           echo The release version number:         ${{ inputs.version_number }}
           echo Build script path:                  ${{ inputs.build_script_path }}
+          echo Enviroment setup script path:       ${{ inputs.env_setup_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Test run:                           ${{ inputs.test_run }}
@@ -77,6 +83,7 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       target_branch: ${{ inputs.target_branch }}
+      env_setup_script_path: ${input.env_setup_script_path }}
       test_run: ${{ inputs.test_run }}
 
   log-outputs-bump-version-generate-changelog:
