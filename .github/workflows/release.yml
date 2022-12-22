@@ -45,16 +45,6 @@ on:
         type: boolean
         default: false
         required: false
-      test_build_package:
-        description: "[Test] Build package"
-        type: boolean
-        default: false
-        required: false
-      test_publish_release:
-        description: "[Test] Publish package"
-        type: boolean
-        default: false
-        required: false
 
 permissions:
   contents: write # this is the permission that allows creating a new release
@@ -77,8 +67,6 @@ jobs:
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Test run:                           ${{ inputs.test_run }}
-          echo [Test] Build package:               ${{ inputs.test_build_package }}
-          echo [Test] Publish package:             ${{ inputs.test_publish_release }}
 
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
@@ -89,6 +77,7 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       target_branch: ${{ inputs.target_branch }}
+      test_run: ${{ inputs.test_run }}
 
   log-outputs-bump-version-generate-changelog:
     name: "[Log output] Bump package version, Generate changelog"
@@ -106,7 +95,7 @@ jobs:
 
   build-test-package:
     name: Build, Test, Package
-    if: ${{ inputs.test_build_package == true && (!failure() && !cancelled()) }}
+    if: ${{ !failure() && !cancelled() }}
     needs: [bump-version-generate-changelog]
 
     uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
@@ -126,7 +115,7 @@ jobs:
 
   github-release:
     name: GitHub Release
-    if: ${{ inputs.test_publish_release == true && (!failure() && !cancelled()) }}
+    if: ${{ !failure() && !cancelled() }}
 
     needs: [bump-version-generate-changelog, build-test-package]
 
