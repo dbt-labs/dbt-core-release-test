@@ -77,7 +77,6 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       target_branch: ${{ inputs.target_branch }}
-      build_script_path: ${{ inputs.build_script_path }}
       test_run: ${{ inputs.test_run }}
 
   log-outputs-bump-version-generate-changelog:
