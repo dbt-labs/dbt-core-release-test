@@ -150,7 +150,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{ inputs.version_number }}
-          path: "dist"
+          path: .
 
       - name: "Publish Distribution To Pypi"
         uses: pypa/gh-action-pypi-publish@v1.4.2
