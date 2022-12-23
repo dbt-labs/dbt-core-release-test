@@ -79,6 +79,8 @@ jobs:
 
     uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@users/alexander-smolyakov/test-token
 
+    secrets: inherit
+
     with:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
