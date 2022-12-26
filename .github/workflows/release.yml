@@ -30,6 +30,11 @@ on:
         type: string
         default: "scripts/build-dist.sh"
         required: true
+      env_setup_script_path:
+        description: "Enviroment setup script path"
+        type: string
+        default: "scripts/env-setup.sh"
+        required: true
       s3_bucket_name:
         description: "AWS S3 bucket name"
         type: string
@@ -64,6 +69,7 @@ jobs:
           echo The branch to release from:         ${{ inputs.target_branch }}
           echo The release version number:         ${{ inputs.version_number }}
           echo Build script path:                  ${{ inputs.build_script_path }}
+          echo Enviroment setup script path:       ${{ inputs.env_setup_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Test run:                           ${{ inputs.test_run }}
@@ -77,6 +83,7 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       target_branch: ${{ inputs.target_branch }}
+      env_setup_script_path: ""
       test_run: ${{ inputs.test_run }}
 
   log-outputs-bump-version-generate-changelog:
@@ -128,24 +135,16 @@ jobs:
       test_run: ${{ inputs.test_run }}
 
   pypi-release:
-    if: ${{ !inputs.test_run }}
+    name: PyPI Release
 
-    name: Pypi Release
+    needs: [github-release]
 
-    runs-on: ubuntu-latest
+    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@users/alexander-smolyakov/update-pypi-release-workflow
 
-    needs: github-release
+    with:
+      version_number: ${{ inputs.version_number }}
+      test_run: ${{ inputs.test_run }}
 
-    environment: PypiProd
-
-    steps:
-      - name: "Download Build Artifact - ${{ inputs.version_number }}"
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ inputs.version_number }}
-          path: "dist"
-
-      - name: "Publish Distribution To Pypi"
-        uses: pypa/gh-action-pypi-publish@v1.4.2
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
