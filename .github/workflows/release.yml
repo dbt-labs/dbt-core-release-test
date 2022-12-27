@@ -139,7 +139,7 @@ jobs:
 
     needs: [github-release]
 
-    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@users/alexander-smolyakov/pipy-release-improve-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@dev
 
     with:
       version_number: ${{ inputs.version_number }}
