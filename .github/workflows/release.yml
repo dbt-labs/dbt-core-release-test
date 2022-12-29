@@ -148,3 +148,20 @@ jobs:
     secrets:
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
       TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+  slack-notification:
+    name: Slack Notification
+    if: ${{ always() }}
+
+    needs:
+      [
+        bump-version-generate-changelog,
+        build-test-package,
+        github-release,
+        pypi-release,
+      ]
+
+    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@users/alexander-smolyakov/add-post-slack-notification-step
+
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TEST_CHANNEL }}
