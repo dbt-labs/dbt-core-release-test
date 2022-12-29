@@ -161,7 +161,7 @@ jobs:
         pypi-release,
       ]
 
-    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@users/alexander-smolyakov/add-post-slack-notification-step
+    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@dev
 
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TEST_CHANNEL }}
