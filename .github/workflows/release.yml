@@ -77,7 +77,7 @@ jobs:
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
 
-    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@finalize-changes-release-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@dev
 
     with:
       sha: ${{ inputs.sha }}
@@ -105,7 +105,7 @@ jobs:
     if: ${{ !failure() && !cancelled() }}
     needs: [bump-version-generate-changelog]
 
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@finalize-changes-release-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/build.yml@dev
 
     with:
       sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
@@ -126,7 +126,7 @@ jobs:
 
     needs: [bump-version-generate-changelog, build-test-package]
 
-    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@finalize-changes-release-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@dev
 
     with:
       sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
@@ -139,7 +139,7 @@ jobs:
 
     needs: [github-release]
 
-    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@finalize-changes-release-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@dev
 
     with:
       version_number: ${{ inputs.version_number }}
@@ -161,7 +161,7 @@ jobs:
         pypi-release,
       ]
 
-    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@finalize-changes-release-workflow
+    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@dev
     with:
       status: "failure"
 
