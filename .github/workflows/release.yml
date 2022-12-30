@@ -151,7 +151,7 @@ jobs:
 
   slack-notification:
     name: Slack Notification
-    if: ${{ always() }}
+    if: ${{ failure() }}
 
     needs:
       [
@@ -162,6 +162,8 @@ jobs:
       ]
 
     uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@finalize-changes-release-workflow
+    with:
+      status: "failure"
 
     secrets:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TEST_CHANNEL }}
