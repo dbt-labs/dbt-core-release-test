@@ -9,19 +9,22 @@ defaults:
   run:
     shell: bash
 
+env:
+  RELEASE_BRANCH: "main"
+
 jobs:
   aggregate-release-data:
     runs-on: ubuntu-latest
 
     outputs:
-      version_number: ${{ steps.nightly-release-version.outputs.number }}
       commit_sha: ${{ steps.resolve-commit-sha.outputs.release_commit }}
+      version_number: ${{ steps.nightly-release-version.outputs.number }}
 
     steps:
-      - name: "Checkout ${{ github.repository }} Branch main"
+      - name: "Checkout ${{ github.repository }} Branch ${{ env.RELEASE_BRANCH }}"
         uses: actions/checkout@v3
         with:
-          ref: main
+          ref: ${{ env.RELEASE_BRANCH }}
 
       - name: "Resolve Commit To Release"
         id: resolve-commit-sha
@@ -57,12 +60,12 @@ jobs:
           echo commit_sha    : ${{ needs.aggregate-release-data.outputs.commit_sha }} 
           echo version_number: ${{ needs.aggregate-release-data.outputs.version_number }}
 
-  # release-github-pypi:
-  #   needs: [aggregate-release-data]
+  release-github-pypi:
+    needs: [aggregate-release-data]
 
-  #   uses: .github/workflows/release.yml
-  #   with:
-  #     sha: sha
-  #     target_branch: main
-  #     version_number: 1.1.1
-  #     test_run: true
+    uses: .github/workflows/release.yml@users/alexander-smolyakov/implement-nightly-releases-workflow
+    with:
+      sha: ${{ needs.aggregate-release-data.outputs.commit_sha }}
+      target_branch: ${{ env.RELEASE_BRANCH }}
+      version_number: ${{ needs.aggregate-release-data.outputs.version_number }}
+      test_run: true
