@@ -74,4 +74,8 @@ jobs:
       sha: ${{ needs.aggregate-release-data.outputs.commit_sha }}
       target_branch: ${{ needs.aggregate-release-data.outputs.release-branch }}
       version_number: ${{ needs.aggregate-release-data.outputs.version_number }}
+      build_script_path: "scripts/build-dist.sh"
+      env_setup_script_path: "scripts/env-setup.sh"
+      s3_bucket_name: "core-team-artifacts"
+      package_test_command: "dbt --version"
       test_run: true
