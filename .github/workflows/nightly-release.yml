@@ -79,3 +79,9 @@ jobs:
       s3_bucket_name: "core-team-artifacts"
       package_test_command: "dbt --version"
       test_run: true
+    secrets:
+      PRODUCTION_AWS_ACCESS_KEY_ID: ${{ secrets.PRODUCTION_AWS_ACCESS_KEY_ID }}
+      PRODUCTION_AWS_SECRET_ACCESS_KEY: ${{ secrets.PRODUCTION_AWS_SECRET_ACCESS_KEY }}
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      SLACK_TEST_CHANNEL: ${{ secrets.SLACK_TEST_CHANNEL }}
