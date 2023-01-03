@@ -15,7 +15,7 @@ jobs:
 
     outputs:
       commit_sha: ${{ steps.resolve-commit-sha.outputs.release_commit }}
-      version_number: ${{ steps.nightly-release-version.outputs.release_number }}
+      version_number: ${{ steps.nightly-release-version.outputs.number }}
 
     steps:
       - name: "Checkout ${{ github.repository }} Branch main"
@@ -44,8 +44,8 @@ jobs:
       - name: "Generate Nightly Release Version Number"
         id: nightly-release-version
         run:
-          number="${{ steps.semver.outputs.base-version }}${{ steps.semver.outputs.pre-release-type }}"
-          echo "release_number=$number" >> $GITHUB_OUTPUT
+          number="${{ steps.semver.outputs.base-version }}${{ steps.semver.outputs.pre-release-type }}$GITHUB_RUN_ID"
+          echo "number=$number" >> $GITHUB_OUTPUT
 
   log-outputs-aggregate-release-data:
     runs-on: ubuntu-latest
