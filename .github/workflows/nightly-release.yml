@@ -43,10 +43,8 @@ jobs:
 
       - name: "Generate Nightly Release Version Number"
         id: nightly-release-version
-        run:
-          number="${{ steps.semver.outputs.base-version }}${{ steps.semver.outputs.pre-release-type }}"
-          number+="$GITHUB_RUN_ID"
-          echo number=$number
+        run: |
+          number="${{ steps.semver.outputs.base-version }}${{ steps.semver.outputs.pre-release-type }}$GITHUB_RUN_ID"
           echo "number=$number" >> $GITHUB_OUTPUT
 
   log-outputs-aggregate-release-data:
