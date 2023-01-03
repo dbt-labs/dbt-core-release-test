@@ -19,7 +19,7 @@ jobs:
     outputs:
       commit_sha: ${{ steps.resolve-commit-sha.outputs.release_commit }}
       version_number: ${{ steps.nightly-release-version.outputs.number }}
-      release-branch: ${{ steps.release-branch.outputs.name }}
+      release_branch: ${{ steps.release-branch.outputs.name }}
 
     steps:
       - name: "Checkout ${{ github.repository }} Branch ${{ env.RELEASE_BRANCH }}"
@@ -63,8 +63,9 @@ jobs:
     steps:
       - name: "[DEBUG] Log Outputs"
         run: |
-          echo commit_sha    : ${{ needs.aggregate-release-data.outputs.commit_sha }} 
+          echo commit_sha    : ${{ needs.aggregate-release-data.outputs.commit_sha }}
           echo version_number: ${{ needs.aggregate-release-data.outputs.version_number }}
+          echo release_branch: ${{ needs.aggregate-release-data.outputs.release_branch }}
 
   release-github-pypi:
     needs: [aggregate-release-data]
