@@ -32,7 +32,7 @@ jobs:
       - name: "Get Current Version Number"
         id: version-number-sources
         run: |
-          current_version=`awk -F"current_version = " '{print $2}' .bumpversion.cfg`
+          current_version=`awk -F"current_version = " '{print $2}' .bumpversion.cfg | tr '\n' ' '`
           echo "current_version=$current_version" >> $GITHUB_OUTPUT
 
       - name: "Audit Version And Parse Into Parts"
