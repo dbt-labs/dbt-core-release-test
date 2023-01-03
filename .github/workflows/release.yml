@@ -12,6 +12,7 @@ name: Release to GitHub and PyPi
 
 on:
   workflow_dispatch:
+  workflow_call:
     inputs:
       sha:
         description: "The last commit sha in the release"
@@ -31,7 +32,7 @@ on:
         default: "scripts/build-dist.sh"
         required: true
       env_setup_script_path:
-        description: "Enviroment setup script path"
+        description: "Environment setup script path"
         type: string
         default: "scripts/env-setup.sh"
         required: true
@@ -69,7 +70,7 @@ jobs:
           echo The branch to release from:         ${{ inputs.target_branch }}
           echo The release version number:         ${{ inputs.version_number }}
           echo Build script path:                  ${{ inputs.build_script_path }}
-          echo Enviroment setup script path:       ${{ inputs.env_setup_script_path }}
+          echo Environment setup script path:       ${{ inputs.env_setup_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Test run:                           ${{ inputs.test_run }}
