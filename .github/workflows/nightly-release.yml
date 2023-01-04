@@ -56,7 +56,6 @@ jobs:
           echo "number=$number" >> $GITHUB_OUTPUT
 
       - name: "Audit Nightly Release Version And Parse Into Parts"
-        id: semver
         uses: dbt-labs/actions/parse-semver@users/alexander-smolyakov/parse-semver-fix-warnings
         with:
           version: ${{ steps.nightly-release-version.outputs.number }}
