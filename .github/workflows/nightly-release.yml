@@ -10,7 +10,7 @@ defaults:
     shell: bash
 
 env:
-  RELEASE_BRANCH: "main"
+  RELEASE_BRANCH: "users/alexander-smolyakov/implement-nightly-releases-workflow"
 
 jobs:
   aggregate-release-data:
