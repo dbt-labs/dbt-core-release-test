@@ -45,10 +45,14 @@ jobs:
         with:
           version: ${{ steps.version-number-sources.outputs.current_version }}
 
+      - name: "Get Current Date"
+        id: current-date
+        run: echo "date=$(date +'%m%d%Y')" >> $GITHUB_OUTPUT
+
       - name: "Generate Nightly Release Version Number"
         id: nightly-release-version
         run: |
-          number="${{ steps.semver.outputs.base-version }}${{ steps.semver.outputs.pre-release-type }}$GITHUB_RUN_ID"
+          number="${{ steps.semver.outputs.base-version }}nightly${{ steps.current-date.outputs.date }}"
           echo "number=$number" >> $GITHUB_OUTPUT
 
       - name: "Set Release Branch"
