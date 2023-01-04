@@ -52,7 +52,7 @@ jobs:
       - name: "Generate Nightly Release Version Number"
         id: nightly-release-version
         run: |
-          number="${{ steps.semver.outputs.version }}.nightly${{ steps.current-date.outputs.date }}"
+          number="${{ steps.semver.outputs.version }}+nightly${{ steps.current-date.outputs.date }}"
           echo "number=$number" >> $GITHUB_OUTPUT
 
       - name: "Set Release Branch"
