@@ -84,7 +84,7 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       target_branch: ${{ inputs.target_branch }}
-      env_setup_script_path: ""
+      env_setup_script_path: ${{ inputs.env_setup_script_path }}
       test_run: ${{ inputs.test_run }}
 
     secrets:
