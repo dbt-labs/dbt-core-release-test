@@ -12,6 +12,7 @@ name: Release to GitHub and PyPi
 
 on:
   workflow_dispatch:
+  workflow_call:
     inputs:
       sha:
         description: "The last commit sha in the release"
@@ -30,6 +31,11 @@ on:
         type: string
         default: "scripts/build-dist.sh"
         required: true
+      env_setup_script_path:
+        description: "Environment setup script path"
+        type: string
+        default: "scripts/env-setup.sh"
+        required: false
       s3_bucket_name:
         description: "AWS S3 bucket name"
         type: string
@@ -64,6 +70,7 @@ jobs:
           echo The branch to release from:         ${{ inputs.target_branch }}
           echo The release version number:         ${{ inputs.version_number }}
           echo Build script path:                  ${{ inputs.build_script_path }}
+          echo Environment setup script path:      ${{ inputs.env_setup_script_path }}
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Test run:                           ${{ inputs.test_run }}
@@ -77,7 +84,11 @@ jobs:
       sha: ${{ inputs.sha }}
       version_number: ${{ inputs.version_number }}
       target_branch: ${{ inputs.target_branch }}
+      env_setup_script_path: ${{ inputs.env_setup_script_path }}
       test_run: ${{ inputs.test_run }}
+
+    secrets:
+      FISHTOWN_BOT_PAT: ${{ secrets.FISHTOWN_BOT_PAT }}
 
   log-outputs-bump-version-generate-changelog:
     name: "[Log output] Bump package version, Generate changelog"
@@ -128,24 +139,35 @@ jobs:
       test_run: ${{ inputs.test_run }}
 
   pypi-release:
-    if: ${{ !inputs.test_run }}
+    name: PyPI Release
 
-    name: Pypi Release
+    needs: [github-release]
 
-    runs-on: ubuntu-latest
+    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@main
 
-    needs: github-release
+    with:
+      version_number: ${{ inputs.version_number }}
+      test_run: ${{ inputs.test_run }}
 
-    environment: PypiProd
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
 
-    steps:
-      - name: "Download Build Artifact - ${{ inputs.version_number }}"
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ inputs.version_number }}
-          path: "dist"
+  slack-notification:
+    name: Slack Notification
+    if: ${{ failure() }}
 
-      - name: "Publish Distribution To Pypi"
-        uses: pypa/gh-action-pypi-publish@v1.4.2
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
+    needs:
+      [
+        bump-version-generate-changelog,
+        build-test-package,
+        github-release,
+        pypi-release,
+      ]
+
+    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@main
+    with:
+      status: "failure"
+
+    secrets:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TEST_CHANNEL }}
