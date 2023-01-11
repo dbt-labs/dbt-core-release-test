@@ -89,4 +89,5 @@ jobs:
       s3_bucket_name: "core-team-artifacts"
       package_test_command: "dbt --version"
       test_run: true
+      nightly_release: true
     secrets: inherit
