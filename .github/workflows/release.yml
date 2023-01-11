@@ -51,6 +51,11 @@ on:
         type: boolean
         default: false
         required: false
+      nightly_release:
+        description: "Nightly release to dev environment"
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: write # this is the permission that allows creating a new release
@@ -74,6 +79,7 @@ jobs:
           echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
           echo Package test command:               ${{ inputs.package_test_command }}
           echo Test run:                           ${{ inputs.test_run }}
+          echo Nightly release:                    ${{ inputs.nightly_release }}
 
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
@@ -86,6 +92,7 @@ jobs:
       target_branch: ${{ inputs.target_branch }}
       env_setup_script_path: ${{ inputs.env_setup_script_path }}
       test_run: ${{ inputs.test_run }}
+      nightly_release: ${{ inputs.nightly_release }}
 
     secrets:
       FISHTOWN_BOT_PAT: ${{ secrets.FISHTOWN_BOT_PAT }}
@@ -119,6 +126,7 @@ jobs:
       s3_bucket_name: ${{ inputs.s3_bucket_name }}
       package_test_command: ${{ inputs.package_test_command }}
       test_run: ${{ inputs.test_run }}
+      nightly_release: ${{ inputs.nightly_release }}
 
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.PRODUCTION_AWS_ACCESS_KEY_ID }}
