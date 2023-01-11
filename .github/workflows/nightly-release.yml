@@ -10,7 +10,7 @@ defaults:
     shell: bash
 
 env:
-  RELEASE_BRANCH: "main"
+  RELEASE_BRANCH: "prep-release/nightly-release/1.4.0a1.dev01112023+nightly_3893054641"
 
 jobs:
   aggregate-release-data:
