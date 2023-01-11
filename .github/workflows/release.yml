@@ -92,7 +92,7 @@ jobs:
       target_branch: ${{ inputs.target_branch }}
       env_setup_script_path: ${{ inputs.env_setup_script_path }}
       test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
+      nightly_release: true
 
     secrets:
       FISHTOWN_BOT_PAT: ${{ secrets.FISHTOWN_BOT_PAT }}
@@ -126,7 +126,7 @@ jobs:
       s3_bucket_name: ${{ inputs.s3_bucket_name }}
       package_test_command: ${{ inputs.package_test_command }}
       test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
+      nightly_release: true
 
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.PRODUCTION_AWS_ACCESS_KEY_ID }}
