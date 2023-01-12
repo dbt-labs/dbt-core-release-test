@@ -1,9 +1,11 @@
 # flake8: noqa
 from dbt.events.test_types import UnitTestInfo
 from dbt.events import AdapterLogger
-from dbt.events.functions import event_to_json, LOG_VERSION, event_to_dict
+from dbt.events.functions import msg_to_json, LOG_VERSION, msg_to_dict
+from dbt.events.base_types import msg_from_base_event
 from dbt.events.types import *
 from dbt.events.test_types import *
+from dbt.contracts.results import TimingInfo
 
 from dbt.events.base_types import (
     BaseEvent,
@@ -102,43 +104,6 @@ class TestEventCodes:
             all_codes.add(code)
 
 
-def MockNode():
-    return ModelNode(
-        alias="model_one",
-        name="model_one",
-        database="dbt",
-        schema="analytics",
-        resource_type=NodeType.Model,
-        unique_id="model.root.model_one",
-        fqn=["root", "model_one"],
-        package_name="root",
-        original_file_path="model_one.sql",
-        root_path="/usr/src/app",
-        refs=[],
-        sources=[],
-        depends_on=DependsOn(),
-        config=NodeConfig.from_dict(
-            {
-                "enabled": True,
-                "materialized": "view",
-                "persist_docs": {},
-                "post-hook": [],
-                "pre-hook": [],
-                "vars": {},
-                "quoting": {},
-                "column_types": {},
-                "tags": [],
-            }
-        ),
-        tags=[],
-        path="model_one.sql",
-        raw_code="",
-        description="",
-        columns={},
-        checksum=FileHash.from_contents(""),
-    )
-
-
 sample_values = [
     # A - pre-project loading
     MainReportVersion(version=""),
@@ -146,15 +111,9 @@ sample_values = [
     MainTrackingUserState(user_state=""),
     MergedFromState(num_merged=0, sample=[]),
     MissingProfileTarget(profile_name="", target_name=""),
-    InvalidVarsYAML(),
-    DbtProjectError(),
-    DbtProjectErrorException(exc=""),
-    DbtProfileError(),
-    DbtProfileErrorException(exc=""),
-    ProfileListTitle(),
-    ListSingleProfile(profile=""),
-    NoDefinedProfiles(),
-    ProfileHelpMessage(),
+    InvalidOptionYAML(option_name="vars"),
+    LogDbtProjectError(),
+    LogDbtProfileError(),
     StarterProjectPath(dir=""),
     ConfigFolderDirectory(dir=""),
     NoSampleProfileFound(adapter=""),
@@ -174,6 +133,7 @@ sample_values = [
     AdapterDeprecationWarning(old_name="", new_name=""),
     MetricAttributesRenamed(metric_name=""),
     ExposureNameDeprecation(exposure=""),
+    InternalDeprecation(name="", reason="", suggested_action="", version=""),
 
     # E - DB Adapter ======================
     AdapterEventDebug(),
@@ -199,35 +159,12 @@ sample_values = [
     ),
     SchemaCreation(relation=ReferenceKeyMsg(database="", schema="", identifier="")),
     SchemaDrop(relation=ReferenceKeyMsg(database="", schema="", identifier="")),
-    UncachedRelation(
-        dep_key=ReferenceKeyMsg(database="", schema="", identifier=""),
+    CacheAction(
+        action="adding_relation",
         ref_key=ReferenceKeyMsg(database="", schema="", identifier=""),
+        ref_key_2=ReferenceKeyMsg(database="", schema="", identifier=""),
     ),
-    AddLink(
-        dep_key=ReferenceKeyMsg(database="", schema="", identifier=""),
-        ref_key=ReferenceKeyMsg(database="", schema="", identifier=""),
-    ),
-    AddRelation(relation=ReferenceKeyMsg(database="", schema="", identifier="")),
-    DropMissingRelation(relation=ReferenceKeyMsg(database="", schema="", identifier="")),
-    DropCascade(
-        dropped=ReferenceKeyMsg(database="", schema="", identifier=""),
-        consequences=[ReferenceKeyMsg(database="", schema="", identifier="")],
-    ),
-    DropRelation(dropped=ReferenceKeyMsg()),
-    UpdateReference(
-        old_key=ReferenceKeyMsg(database="", schema="", identifier=""),
-        new_key=ReferenceKeyMsg(database="", schema="", identifier=""),
-        cached_key=ReferenceKeyMsg(database="", schema="", identifier=""),
-    ),
-    TemporaryRelation(key=ReferenceKeyMsg(database="", schema="", identifier="")),
-    RenameSchema(
-        old_key=ReferenceKeyMsg(database="", schema="", identifier=""),
-        new_key=ReferenceKeyMsg(database="", schema="", identifier=""),
-    ),
-    DumpBeforeAddGraph(dump=dict()),
-    DumpAfterAddGraph(dump=dict()),
-    DumpBeforeRenameSchema(dump=dict()),
-    DumpAfterRenameSchema(dump=dict()),
+    CacheDumpGraph(before_after="before", action="rename", dump=dict()),
     AdapterImportError(exc=""),
     PluginLoadError(exc_info=""),
     NewConnectionOpening(connection_state=""),
@@ -240,39 +177,19 @@ sample_values = [
     BuildingCatalog(),
     DatabaseErrorRunningHook(hook_type=""),
     HooksRunning(num_hooks=0, hook_type=""),
-    HookFinished(stat_line="", execution="", execution_time=0),
+    FinishedRunningStats(stat_line="", execution="", execution_time=0),
 
     # I - Project parsing ======================
-    ParseCmdStart(),
-    ParseCmdCompiling(),
-    ParseCmdWritingManifest(),
-    ParseCmdDone(),
-    ManifestDependenciesLoaded(),
-    ManifestLoaderCreated(),
-    ManifestLoaded(),
-    ManifestChecked(),
-    ManifestFlatGraphBuilt(),
-    ParseCmdPerfInfoPath(path=""),
+    ParseCmdOut(msg="testing"),
     GenericTestFileParse(path=""),
     MacroFileParse(path=""),
-    PartialParsingFullReparseBecauseOfError(),
-    PartialParsingExceptionFile(file=""),
+    PartialParsingErrorProcessingFile(file=""),
     PartialParsingFile(file_id=""),
-    PartialParsingException(exc_info={}),
+    PartialParsingError(exc_info={}),
     PartialParsingSkipParsing(),
-    PartialParsingMacroChangeStartFullParse(),
-    PartialParsingProjectEnvVarsChanged(),
-    PartialParsingProfileEnvVarsChanged(),
-    PartialParsingDeletedMetric(unique_id=""),
-    ManifestWrongMetadataVersion(version=""),
-    PartialParsingVersionMismatch(saved_version="", current_version=""),
-    PartialParsingFailedBecauseConfigChange(),
-    PartialParsingFailedBecauseProfileChange(),
-    PartialParsingFailedBecauseNewProjectDependency(),
-    PartialParsingFailedBecauseHashChanged(),
+    UnableToPartialParse(reason="something went wrong"),
     PartialParsingNotEnabled(),
     ParsedFileLoadFailed(path="", exc="", exc_info=""),
-    PartialParseSaveFileNotFound(),
     StaticParserCausedJinjaRendering(path=""),
     UsingExperimentalParser(path=""),
     SampleFullJinjaRendering(path=""),
@@ -283,15 +200,7 @@ sample_values = [
     ExperimentalParserSuccess(path=""),
     ExperimentalParserFailure(path=""),
     PartialParsingEnabled(deleted=0, added=0, changed=0),
-    PartialParsingAddedFile(file_id=""),
-    PartialParsingDeletedFile(file_id=""),
-    PartialParsingUpdatedFile(file_id=""),
-    PartialParsingNodeMissingInSourceFile(file_id=""),
-    PartialParsingMissingNodes(file_id=""),
-    PartialParsingChildMapMissingUniqueID(unique_id=""),
-    PartialParsingUpdateSchemaFile(file_id=""),
-    PartialParsingDeletedSource(unique_id=""),
-    PartialParsingDeletedExposure(unique_id=""),
+    PartialParsingFile(file_id=""),
     InvalidDisabledTargetInTestNode(
         resource_type_title="",
         unique_id="",
@@ -308,7 +217,7 @@ sample_values = [
     UnusedTables(unused_tables=[]),
     WrongResourceSchemaFile(patch_name="", resource_type="", file_path="", plural_resource_type=""),
     NoNodeForYamlKey(patch_name="", yaml_key="", file_path=""),
-    MacroPatchNotFound(patch_name=""),
+    MacroNotFoundForPatch(patch_name=""),
     NodeNotFoundOrDisabled(
         original_file_path="",
         unique_id="",
@@ -435,7 +344,7 @@ sample_values = [
     # W - Node testing ======================
 
     CatchableExceptionOnRun(exc=""),
-    InternalExceptionOnRun(build_path="", exc=""),
+    InternalErrorOnRun(build_path="", exc=""),
     GenericExceptionOnRun(build_path="", unique_id="", exc=""),
     NodeConnectionReleaseError(node_name="", exc=""),
     FoundStats(stat_line=""),
@@ -448,8 +357,8 @@ sample_values = [
     SystemErrorRetrievingModTime(path=""),
     SystemCouldNotWrite(path="", reason="", exc=""),
     SystemExecutingCmd(cmd=[""]),
-    SystemStdOutMsg(bmsg=b""),
-    SystemStdErrMsg(bmsg=b""),
+    SystemStdOut(bmsg=b""),
+    SystemStdErr(bmsg=b""),
     SystemReportReturnCode(returncode=0),
     TimingInfoCollected(),
     LogDebugStackTrace(),
@@ -518,11 +427,21 @@ class TestEventJSONSerialization:
 
         # if we have everything we need to test, try to serialize everything
         for event in sample_values:
-            event_dict = event_to_dict(event)
+            msg = msg_from_base_event(event)
+            msg_dict = msg_to_dict(msg)
             try:
-                event_json = event_to_json(event)
+                msg_json = msg_to_json(msg)
             except Exception as e:
                 raise Exception(f"{event} is not serializable to json. Originating exception: {e}")
 
 
 T = TypeVar("T")
+
+
+def test_date_serialization():
+    ti = TimingInfo("test")
+    ti.begin()
+    ti.end()
+    ti_dict = ti.to_dict()
+    assert ti_dict["started_at"].endswith("Z")
+    assert ti_dict["completed_at"].endswith("Z")
