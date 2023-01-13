@@ -217,13 +217,7 @@ jobs:
       - name: "Resolve Commit SHA For Release"
         id: resolve_commit_sha
         run: |
-          commit_sha=""
-          if [[ ${{ needs.audit-changelog.outputs.exists }} == false ]] || [[ ${{ needs.audit-version-in-code.outputs.up_to_date }} == false ]]
-          then
-            commit_sha=$(git rev-parse HEAD)
-          else
-            commit_sha=${{ inputs.sha }}
-          fi
+          commit_sha=$(git rev-parse HEAD)
           echo "release_sha=$commit_sha" >> $GITHUB_OUTPUT
 
       - name: "[Notification] Resolve Commit SHA For Release"
