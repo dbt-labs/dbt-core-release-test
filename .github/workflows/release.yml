@@ -8,217 +8,388 @@
 # **when?**
 # This will only run manually with a given sha, version, and changelog_path
 
-name: Release to GitHub and PyPi
+# name: Release to GitHub and PyPi
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       sha:
+#         description: "The last commit sha in the release"
+#         type: string
+#         required: true
+#       target_branch:
+#         description: "The branch to release from"
+#         type: string
+#         required: true
+#       version_number:
+#         description: "The release version number (i.e. 1.0.0b1)"
+#         type: string
+#         required: true
+#       build_script_path:
+#         description: "Build script path"
+#         type: string
+#         default: "scripts/build-dist.sh"
+#         required: true
+#       env_setup_script_path:
+#         description: "Environment setup script path"
+#         type: string
+#         default: "scripts/env-setup.sh"
+#         required: false
+#       s3_bucket_name:
+#         description: "AWS S3 bucket name"
+#         type: string
+#         default: "core-team-artifacts"
+#         required: true
+#       package_test_command:
+#         description: "Package test command"
+#         type: string
+#         default: "dbt --version"
+#         required: true
+#       test_run:
+#         description: "Test run (Publish release as draft)"
+#         type: boolean
+#         default: false
+#         required: false
+#       nightly_release:
+#         description: "Nightly release to dev environment"
+#         type: boolean
+#         default: false
+#         required: false
+#   workflow_call:
+#     inputs:
+#       sha:
+#         description: "The last commit sha in the release"
+#         type: string
+#         required: true
+#       target_branch:
+#         description: "The branch to release from"
+#         type: string
+#         required: true
+#       version_number:
+#         description: "The release version number (i.e. 1.0.0b1)"
+#         type: string
+#         required: true
+#       build_script_path:
+#         description: "Build script path"
+#         type: string
+#         default: "scripts/build-dist.sh"
+#         required: true
+#       env_setup_script_path:
+#         description: "Environment setup script path"
+#         type: string
+#         default: "scripts/env-setup.sh"
+#         required: false
+#       s3_bucket_name:
+#         description: "AWS S3 bucket name"
+#         type: string
+#         default: "core-team-artifacts"
+#         required: true
+#       package_test_command:
+#         description: "Package test command"
+#         type: string
+#         default: "dbt --version"
+#         required: true
+#       test_run:
+#         description: "Test run (Publish release as draft)"
+#         type: boolean
+#         default: false
+#         required: false
+#       nightly_release:
+#         description: "Nightly release to dev environment"
+#         type: boolean
+#         default: false
+#         required: false
+
+# **what?**
+# Perform the version bump, generate the changelog and run tests.
+#
+# Inputs:
+#  sha:                   The commit to attach to this release
+#  version_number:        The release version number (i.e. 1.0.0b1, 1.2.3rc2, 1.0.0)
+#  target_branch:         The branch that we will release from
+#  env_setup_script_path: Path to the environment setup script
+#  test_run:              Test run (The temp branch will be used for release)
+#  nightly_release:       Identifier that this is nightly release
+#
+# Outputs:
+#   final_sha:      The sha that will actually be released.  This can differ from the
+#                   input sha if adding a version bump and/or changelog
+#   changelog_path: Path to the changelog file (ex .changes/1.2.3-rc1.md)
+#
+# Branching strategy:
+#  - During execution workflow execution the temp branch will be generated.
+#  - For normal runs the temp branch will be removed once changes were merged to target branch;
+#  - For test runs we will keep temp branch and will use it for release;
+#  Naming strategy:
+#  - For normal runs:      prep-release/${{ inputs.version_number }}_$GITHUB_RUN_ID
+#  - For test runs:        prep-release/test-run/${{ inputs.version_number }}_$GITHUB_RUN_ID
+#  - For nightly releases: prep-release/nightly-release/${{ inputs.version_number }}_$GITHUB_RUN_ID
+#
+# **why?**
+# Reusable and consistent GitHub release process.
+#
+# **when?**
+# Call when ready to kick off a build and release
+#
+# Validation Checks
+#
+#  1. Bump the version if it has not been bumped
+#  2. Generate the changelog (via changie) if there is no markdown file for this version
+#
+
+name: Version Bump and Changelog Generation
 
 on:
   workflow_dispatch:
     inputs:
       sha:
-        description: "The last commit sha in the release"
-        type: string
+        description: ""
         required: true
-      target_branch:
-        description: "The branch to release from"
         type: string
-        required: true
       version_number:
-        description: "The release version number (i.e. 1.0.0b1)"
-        type: string
+        description: ""
         required: true
-      build_script_path:
-        description: "Build script path"
         type: string
-        default: "scripts/build-dist.sh"
-        required: true
-      env_setup_script_path:
-        description: "Environment setup script path"
-        type: string
-        default: "scripts/env-setup.sh"
-        required: false
-      s3_bucket_name:
-        description: "AWS S3 bucket name"
-        type: string
-        default: "core-team-artifacts"
-        required: true
-      package_test_command:
-        description: "Package test command"
-        type: string
-        default: "dbt --version"
-        required: true
-      test_run:
-        description: "Test run (Publish release as draft)"
-        type: boolean
-        default: false
-        required: false
-      nightly_release:
-        description: "Nightly release to dev environment"
-        type: boolean
-        default: false
-        required: false
-  workflow_call:
-    inputs:
-      sha:
-        description: "The last commit sha in the release"
-        type: string
-        required: true
       target_branch:
-        description: "The branch to release from"
-        type: string
+        description: ""
         required: true
-      version_number:
-        description: "The release version number (i.e. 1.0.0b1)"
         type: string
-        required: true
-      build_script_path:
-        description: "Build script path"
-        type: string
-        default: "scripts/build-dist.sh"
-        required: true
       env_setup_script_path:
-        description: "Environment setup script path"
-        type: string
-        default: "scripts/env-setup.sh"
+        description: ""
         required: false
-      s3_bucket_name:
-        description: "AWS S3 bucket name"
         type: string
-        default: "core-team-artifacts"
-        required: true
-      package_test_command:
-        description: "Package test command"
-        type: string
-        default: "dbt --version"
-        required: true
+        default: ""
       test_run:
-        description: "Test run (Publish release as draft)"
-        type: boolean
-        default: false
+        description: ""
         required: false
+        default: true
+        type: boolean
       nightly_release:
-        description: "Nightly release to dev environment"
+        description: ""
         type: boolean
         default: false
         required: false
 
+
 permissions:
-  contents: write # this is the permission that allows creating a new release
+  contents: write
 
 defaults:
   run:
     shell: bash
 
+env:
+  PYTHON_TARGET_VERSION: 3.8
+  NOTIFICATION_PREFIX: "[Release Preparation]"
+
 jobs:
   log-inputs:
-    name: Log Inputs
     runs-on: ubuntu-latest
+
     steps:
       - name: "[DEBUG] Print Variables"
         run: |
-          echo The last commit sha in the release: ${{ inputs.sha }}
-          echo The branch to release from:         ${{ inputs.target_branch }}
-          echo The release version number:         ${{ inputs.version_number }}
-          echo Build script path:                  ${{ inputs.build_script_path }}
-          echo Environment setup script path:      ${{ inputs.env_setup_script_path }}
-          echo AWS S3 bucket name:                 ${{ inputs.s3_bucket_name }}
-          echo Package test command:               ${{ inputs.package_test_command }}
-          echo Test run:                           ${{ inputs.test_run }}
-          echo Nightly release:                    ${{ inputs.nightly_release }}
+          # WORKFLOW INPUTS
+          echo The last commit sha in the release:   ${{ inputs.sha }}
+          echo The release version number:           ${{ inputs.version_number }}
+          echo The branch that we will release from: ${{ inputs.target_branch }}
+          echo Path to the environment setup script: ${{ inputs.env_setup_script_path }}
+          echo Test run:                             ${{ inputs.test_run }}
+          echo Nightly release:                      ${{ inputs.nightly_release }}
+          # ENVIRONMENT VARIABLES
+          echo Python target version:                ${{ env.PYTHON_TARGET_VERSION }}
+          echo Notification prefix:                  ${{ env.NOTIFICATION_PREFIX }}
 
-  bump-version-generate-changelog:
-    name: Bump package version, Generate changelog
-
-    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@main
-
-    with:
-      sha: ${{ inputs.sha }}
-      version_number: ${{ inputs.version_number }}
-      target_branch: ${{ inputs.target_branch }}
-      env_setup_script_path: ${{ inputs.env_setup_script_path }}
-      test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
-
-    secrets:
-      FISHTOWN_BOT_PAT: ${{ secrets.FISHTOWN_BOT_PAT }}
-
-  log-outputs-bump-version-generate-changelog:
-    name: "[Log output] Bump package version, Generate changelog"
-    if: ${{ !failure() && !cancelled() }}
-
-    needs: [bump-version-generate-changelog]
-
+  audit-version-in-code:
     runs-on: ubuntu-latest
 
+    outputs:
+      up_to_date: ${{ steps.version-check.outputs.up_to_date }}
+
     steps:
-      - name: Print variables
+      - name: "Checkout ${{ github.repository }} Commit ${{ inputs.sha }}"
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.sha }}
+
+      - name: "Check Current Version In Code"
+        id: version-check
         run: |
-          echo Final SHA     : ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-          echo Changelog path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+          is_updated=false
+          if grep -Fxq "current_version = ${{ inputs.version_number }}" .bumpversion.cfg
+          then
+            is_updated=true
+          fi
+          echo "up_to_date=$is_updated" >> $GITHUB_OUTPUT
 
-  build-test-package:
-    name: Build, Test, Package
-    if: ${{ !failure() && !cancelled() }}
-    needs: [bump-version-generate-changelog]
+      - name: "[Notification] Check Current Version In Code"
+        run: |
+          title="Version check"
+          if [[ ${{ steps.version-check.outputs.up_to_date }} == true ]]
+          then
+            message="The version in the codebase is equal to the provided version"
+          else
+            message="The version in the codebase differs from the provided version"
+          fi
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
 
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
+      - name: "[DEBUG] Print Outputs"
+        run: |
+          echo up_to_date: ${{ steps.version-check.outputs.up_to_date }}
 
-    with:
-      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-      version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-      build_script_path: ${{ inputs.build_script_path }}
-      s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      package_test_command: ${{ inputs.package_test_command }}
-      test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
+  skip-version-bump:
+    runs-on: ubuntu-latest
+    needs: [audit-version-in-code]
+    if: needs.audit-version-in-code.outputs.up_to_date == 'true'
 
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.PRODUCTION_AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.PRODUCTION_AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: "Version Already Bumped"
+        run: |
+          # Send notification
+          title="Skip version bump"
+          message="The version has already been bumped to ${{ inputs.version_number }}, skipping version bump"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
 
-  github-release:
-    name: GitHub Release
-    if: ${{ !failure() && !cancelled() }}
+  create-temp-branch:
+    runs-on: ubuntu-latest
+    needs: [audit-version-in-code]
+    if: needs.audit-changelog.outputs.exists == 'false' || needs.audit-version-in-code.outputs.up_to_date == 'false'
 
-    needs: [bump-version-generate-changelog, build-test-package]
+    outputs:
+      branch_name: ${{ steps.variables.outputs.branch_name }}
 
-    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
+    steps:
+      - name: "Checkout ${{ github.repository }} Commit ${{ inputs.sha }}"
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.sha }}
 
-    with:
-      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-      version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-      test_run: ${{ inputs.test_run }}
+      - name: "Generate Branch Name"
+        id: variables
+        run: |
+          name="prep-release/"
+          if [[ ${{ inputs.nightly_release }} == true  ]]
+          then
+            name+="nightly-release/"
+          elif [[ ${{ inputs.test_run }} == true ]]
+          then
+            name+="test-run/"
+          fi
+          name+="${{ inputs.version_number }}_$GITHUB_RUN_ID"
+          echo "branch_name=$name" >> $GITHUB_OUTPUT
 
-  pypi-release:
-    name: PyPI Release
+      - name: "Create Branch - ${{ steps.variables.outputs.branch_name }}"
+        run: |
+          git checkout -b ${{ steps.variables.outputs.branch_name }}
+          git push -u origin ${{ steps.variables.outputs.branch_name }}
 
-    needs: [github-release]
+      - name: "[Notification] Temp branch created"
+        run: |
+          # Send notification
+          title="Temp branch generated"
+          message="The ${{ steps.variables.outputs.branch_name }} branch created"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
 
-    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@main
+      - name: "[DEBUG] Print Outputs"
+        run: |
+          echo branch_name ${{ steps.variables.outputs.branch_name }}
 
-    with:
-      version_number: ${{ inputs.version_number }}
-      test_run: ${{ inputs.test_run }}
+  merge-changes-into-target-branch:
+    runs-on: ubuntu-latest
+    needs: [create-temp-branch]
+    if: ${{ inputs.test_run == false }}
 
-    secrets:
-      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-      TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+    steps:
+      - name: "[Debug] Print Variables"
+        run: |
+          echo target_branch: ${{ inputs.target_branch }}
+          echo branch_name:   ${{ needs.create-temp-branch.outputs.branch_name }}
 
-  slack-notification:
-    name: Slack Notification
-    if: ${{ failure() }}
+      - name: "Checkout Repo ${{ github.repository }}"
+        uses: actions/checkout@v3
 
+      - name: "Merge Changes Into ${{ inputs.target_branch }}"
+        uses: everlytic/branch-merge@1.1.2
+        with:
+          source_ref: ${{ needs.create-temp-branch.outputs.branch_name }}
+          target_branch: ${{ inputs.target_branch }}
+          github_token: ${{ secrets.FISHTOWN_BOT_PAT }} # TODO: probably need to use a custom PAT to override ``.latest`` protection rules
+          commit_message_template: "[Automated] Merged {source_ref} into target {target_branch} during release process"
+
+  determine-release-sha:
+    runs-on: ubuntu-latest
     needs:
       [
-        bump-version-generate-changelog,
-        build-test-package,
-        github-release,
-        pypi-release,
+        create-temp-branch,
+        merge-changes-into-target-branch,
+        audit-version-in-code,
       ]
+    # always run this job, regardless of if the dependant jobs were skipped
+    if: always()
 
-    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@main
-    with:
-      status: "failure"
+    # Get the sha that will be released.  If the changelog already exists on the input sha and the version has already been bumped,
+    # then it is what we will release. Otherwise we generated a changelog and did the version bump in this workflow and there is a
+    # new sha to use from the merge we just did.  Grab that here instead.
+    outputs:
+      final_sha: ${{ steps.resolve_commit_sha.outputs.release_sha }}
 
-    secrets:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_TEST_CHANNEL }}
+    steps:
+      - name: "[Debug] Print Variables"
+        run: |
+          echo target_branch:    ${{ inputs.target_branch }}
+          echo new_branch:       ${{ needs.create-temp-branch.outputs.branch_name }}
+          echo changelog_exists: ${{ needs.audit-changelog.outputs.exists }}
+          echo up_to_date:       ${{ needs.audit-version-in-code.outputs.up_to_date }}
+
+      - name: "Resolve Branch To Checkout"
+        id: resolve_branch
+        run: |
+          branch=""
+          if [[ ${{ inputs.test_run == true }} ]]
+          then
+            branch=${{ needs.create-temp-branch.outputs.branch_name }}
+          else
+            branch=${{ inputs.target_branch }}
+          fi
+          echo "target_branch=$branch" >> $GITHUB_OUTPUT
+
+      - name: "[Notification] Resolve Branch To Checkout"
+        run: |
+          title="Branch pick"
+          message="The ${{ steps.resolve_branch.outputs.target_branch }} branch will be used for release"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+
+      - name: "Checkout Resolved Branch - ${{ steps.resolve_branch.outputs.target_branch }}"
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ steps.resolve_branch.outputs.target_branch }}
+
+      - name: "[Debug] Log Branch"
+        run: git status
+
+      - name: "Resolve Commit SHA For Release"
+        id: resolve_commit_sha
+        run: |
+          commit_sha=""
+          if [[ ${{ needs.audit-changelog.outputs.exists }} == false ]] || [[ ${{ needs.audit-version-in-code.outputs.up_to_date }} == false ]]
+          then
+            commit_sha=$(git rev-parse HEAD)
+          else
+            commit_sha=${{ inputs.sha }}
+          fi
+          echo "release_sha=$commit_sha" >> $GITHUB_OUTPUT
+
+      - name: "[Notification] Resolve Commit SHA For Release"
+        run: |
+          title="Release commit pick"
+          message="The ${{ steps.resolve_commit_sha.outputs.release_sha }} commit will be used for release"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+
+      - name: "Remove Temp Branch - ${{ needs.create-temp-branch.outputs.branch_name }}"
+        if: ${{ inputs.test_run == false && needs.create-temp-branch.outputs.branch_name != '' }}
+        run: |
+          git push origin -d ${{ needs.create-temp-branch.outputs.branch_name }}
+
+      - name: "[Debug] Print Outputs"
+        run: |
+          echo release_sha: ${{ steps.resolve_commit_sha.outputs.release_sha }}
