@@ -148,6 +148,81 @@ jobs:
         run: |
           echo branch_name ${{ steps.variables.outputs.branch_name }}
 
+  bump-version:
+    runs-on: ubuntu-latest
+    needs: [audit-version-in-code, create-temp-branch]
+
+    steps:
+      - name: "Checkout ${{ github.repository }} Branch ${{ needs.create-temp-branch.outputs.branch_name }}"
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.create-temp-branch.outputs.branch_name }}
+
+      
+      - name: "Add Homebrew To PATH"
+        run: |
+          echo "/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+
+      - name: "Install Homebrew Packages"
+        run: |
+          brew install pre-commit
+      
+      # this step will fail on whitespace errors but also correct them
+      - name: "Remove Trailing Whitespace Via Pre-commit"
+        continue-on-error: true
+        run: |
+          pre-commit run trailing-whitespace --files .bumpversion.cfg CHANGELOG.md .changes/*
+          git status
+
+      # this step will fail on newline errors but also correct them
+      - name: "Removing Extra Newlines Via Pre-commit"
+        continue-on-error: true
+        run: |
+          pre-commit run end-of-file-fixer --files .bumpversion.cfg CHANGELOG.md .changes/*
+          git status
+
+      - name: "Set up Python - ${{ env.PYTHON_TARGET_VERSION }}"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_TARGET_VERSION }}
+
+      - name: "Install Python Dependencies"
+        if: needs.audit-version-in-code.outputs.up_to_date == 'false'
+        run: |
+          python3 -m venv env
+          source env/bin/activate
+          python -m pip install --upgrade pip
+
+      - name: "Bump Version To ${{ inputs.version_number }}"
+        if: needs.audit-version-in-code.outputs.up_to_date == 'false'
+        # note: bumpversion is no longer supported, it actually points to bump2version now
+        run: |
+          source env/bin/activate
+          python -m pip install -r dev-requirements.txt
+          env/bin/bumpversion --allow-dirty --new-version ${{ inputs.version_number }} major
+          git status
+
+      - name: "[Notification] Bump Version To ${{ inputs.version_number }}"
+        if: needs.audit-version-in-code.outputs.up_to_date == 'false'
+        run: |
+          title="Version bump"
+          message="Version successfully bumped in codebase to ${{ inputs.version_number }}"
+          echo "::notice title=${{ env.NOTIFICATION_PREFIX }}: $title::$message"
+
+      - name: "Commit & Push Changes"
+        run: |
+          #Data for commit
+          user="Github Build Bot"
+          email="buildbot@fishtownanalytics.com"
+          commit_message="Bumping version to ${{ inputs.version_number }} and generate changelog"
+          #Commit changes to branch
+          git config user.name "$user"
+          git config user.email "$email"
+          git pull
+          git add .
+          git commit -m "$commit_message"
+          git push
+
   merge-changes-into-target-branch:
     runs-on: ubuntu-latest
     needs: [create-temp-branch]
