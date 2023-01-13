@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       sha:
-        description: 14b6351fe7b347ed19f3dbb4c105bb946b574e7c
+        description: "sha"
+        default: 14b6351fe7b347ed19f3dbb4c105bb946b574e7c
         required: true
         type: string
       version_number:
@@ -16,7 +17,8 @@ on:
         default: 1.4.1b1
         type: string
       target_branch:
-        description: er/unprotected-branch
+        description: target_branch
+        default: er/unprotected-branch
         required: true
         type: string
       env_setup_script_path:
