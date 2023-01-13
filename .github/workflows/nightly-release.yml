@@ -2,8 +2,8 @@ name: Nightly Release to GitHub and PyPi
 
 on:
   workflow_dispatch: # for manual triggering
-  schedule:
-    - cron: 0 2 * * *
+  # schedule:
+  #   - cron: 0 2 * * *
 
 defaults:
   run:
