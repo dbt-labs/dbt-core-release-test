@@ -225,7 +225,7 @@ jobs:
 
   merge-changes-into-target-branch:
     runs-on: ubuntu-latest
-    needs: [create-temp-branch]
+    needs: [bump-version, create-temp-branch]
 
     steps:
       - name: "[Debug] Print Variables"
