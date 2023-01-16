@@ -62,6 +62,9 @@
 - [@nshuman1](https://github.com/nshuman1) ([dbt-docs/#6529](https://github.com/dbt-labs/dbt-docs/issues/6529))
 - [@tmastny](https://github.com/tmastny) ([#6216](https://github.com/dbt-labs/dbt-core/issues/6216))
 
+## dbt-core 1.4.0-b3 - January 16, 2023
+
+
 
 ## dbt-core 1.4.0-b1 - December 15, 2022
 
