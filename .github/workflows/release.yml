@@ -1,12 +1,18 @@
 # **what?**
-# Take the given commit, run unit tests specifically on that sha, build and
-# package it, and then release to GitHub and PyPi with that specific build
-
+# Release workflow provides the following steps:
+# - checkout the given commit;
+# - validate version in sources and changelog file for given version;
+# - bump the version and generate a changelog if needed;
+# - merge all changes to the target branch if needed;
+# - run unit and integration tests against given commit;
+# - build and package that SHA;
+# - release it to GitHub and PyPi with that specific build;
+#
 # **why?**
 # Ensure an automated and tested release process
-
+#
 # **when?**
-# This will only run manually with a given sha, version, and changelog_path
+# This workflow can be run manually on demand or can be called by other workflows
 
 name: Release to GitHub and PyPi
 
@@ -48,7 +54,7 @@ on:
       test_run:
         description: "Test run (Publish release as draft)"
         type: boolean
-        default: false
+        default: true
         required: false
       nightly_release:
         description: "Nightly release to dev environment"
