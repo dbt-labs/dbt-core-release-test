@@ -1,56 +1,64 @@
-name: Merge to protected branches
+name: Build, Test, Package and Publish GitHub release
 
 on:
   workflow_dispatch:
     inputs:
-      commit_message:
-        description: "Commit message"
+      generate_build_artifact:
+        description: "Build, test, verify and publish build artifact"
+        type: boolean
+        required: true
+        default: false
+      sha:
+        description: "The last commit sha in the release"
+        required: true
+      version_number:
+        description: "The release version number (i.e. 1.0.0b1)"
+        required: true
+      changelog_path:
+        description: "Path to changes log"
         type: string
-        default: "Empty commit"
+        default: "./CHANGELOG.md"
+        required: false
+      test_run:
+        description: "Launch test run"
+        type: boolean
+        default: true
         required: false
 
 jobs:
-  commit-to-protected-branch:
-    strategy:
-      matrix:
-        branch: [0.0.latest, 1.0.latest, 1.4.latest]
+  log-workflow-inputs:
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout Branch - ${{ matrix.branch }}"
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ matrix.branch }}
-
-      - name: "Create Branch"
-        id: temp-branch
+      - name: Print variables
         run: |
-          branch_name="test/branch-${{ matrix.branch }}/commit"
-          git checkout -b $branch_name
-          git push -u origin $branch_name
-          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+          echo Build, test, verify and publish build artifact: ${{ inputs.generate_build_artifact }}
+          echo The last commit sha in the release: ${{ inputs.sha }}
+          echo The release version number: ${{ inputs.version_number }}
+          echo Expected Changlog path: ${{ inputs.changelog_path }}
+          echo Launch test run: ${{ inputs.test_run }}
 
-      - name: "Commit & Push Changes to ${{ steps.temp-branch.outputs.branch_name }}"
+  build-test-verify-publish-package:
+    if: inputs.generate_build_artifact
+    uses: dbt-labs/dbt-core-release-test/.github/workflows/build-test-package.yml@main
+    with:
+      sha: ${{ inputs.sha }}
+      version_number: ${{ inputs.version_number }}
+
+  publish-github-release:
+    if: ${{ always() && !cancelled() }}
+    needs: [build-test-verify-publish-package]
+    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
+    with:
+      sha: ${{ inputs.sha }}
+      version_number: ${{ inputs.version_number }}
+      changelog_path: ${{ inputs.changelog_path }}
+      test_run: ${{ inputs.test_run }}
+
+  log-workflow-outputs:
+    if: ${{ !failure() && !cancelled() }}
+    needs: [publish-github-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print variables
         run: |
-          #Data for commit
-          user="Github Build Bot"
-          email="buildbot@fishtownanalytics.com"
-          commit_message="${{ inputs.commit_message }}"
-          #Commit changes to branch
-          git config user.name "$user"
-          git config user.email "$email"
-          git pull
-          git add .
-          git commit --allow-empty -m "$commit_message"
-          git push
-
-      - name: "Merge Changes Into ${{ matrix.branch }}"
-        uses: everlytic/branch-merge@1.1.2
-        with:
-          source_ref: ${{ steps.temp-branch.outputs.branch_name }}
-          target_branch: ${{ matrix.branch }}
-          github_token: ${{ secrets.FISHTOWN_BOT_PAT }} # TODO: probably need to use a custom PAT to override ``.latest`` protection rules
-          commit_message_template: "[Automated] Merged {source_ref} into target {target_branch} during release process"
-
-      - name: "Remove Temp Branch - ${{ steps.temp-branch.outputs.branch_name }}"
-        run: |
-          git push origin -d ${{ steps.temp-branch.outputs.branch_name }}
+          echo Tag: ${{ needs.publish-github-release.outputs.tag }}

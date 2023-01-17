@@ -1,0 +1,56 @@
+name: Merge to protected branches
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_message:
+        description: "Commit message"
+        type: string
+        default: "Empty commit"
+        required: false
+
+jobs:
+  commit-to-protected-branch:
+    strategy:
+      matrix:
+        branch: [0.0.latest, 1.0.latest, 1.4.latest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Branch - ${{ matrix.branch }}"
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: "Create Branch"
+        id: temp-branch
+        run: |
+          branch_name="test/branch-${{ matrix.branch }}/commit"
+          git checkout -b $branch_name
+          git push -u origin $branch_name
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+
+      - name: "Commit & Push Changes to ${{ steps.temp-branch.outputs.branch_name }}"
+        run: |
+          #Data for commit
+          user="Github Build Bot"
+          email="buildbot@fishtownanalytics.com"
+          commit_message="${{ inputs.commit_message }}"
+          #Commit changes to branch
+          git config user.name "$user"
+          git config user.email "$email"
+          git pull
+          git add .
+          git commit --allow-empty -m "$commit_message"
+          git push
+
+      - name: "Merge Changes Into ${{ matrix.branch }}"
+        uses: everlytic/branch-merge@1.1.2
+        with:
+          source_ref: ${{ steps.temp-branch.outputs.branch_name }}
+          target_branch: ${{ matrix.branch }}
+          github_token: ${{ secrets.FISHTOWN_BOT_PAT }}
+          commit_message_template: "[Automated] Merged {source_ref} into target {target_branch} during release process"
+
+      - name: "Remove Temp Branch - ${{ steps.temp-branch.outputs.branch_name }}"
+        run: |
+          git push origin -d ${{ steps.temp-branch.outputs.branch_name }}
