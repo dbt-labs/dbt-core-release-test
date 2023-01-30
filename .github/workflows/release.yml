@@ -130,10 +130,17 @@ jobs:
           echo Test run:                           ${{ inputs.test_run }}
           echo Nightly release:                    ${{ inputs.nightly_release }}
 
+  fail-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Fail release"
+        run: exit 1
+
   bump-version-generate-changelog:
     name: Bump package version, Generate changelog
 
-    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@users/alexander-smolyakov/issue53-rework-repo-checks
 
     with:
       sha: ${{ inputs.sha }}
@@ -165,7 +172,7 @@ jobs:
     if: ${{ !failure() && !cancelled() }}
     needs: [bump-version-generate-changelog]
 
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/build.yml@users/alexander-smolyakov/issue53-rework-repo-checks
 
     with:
       sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
@@ -187,7 +194,7 @@ jobs:
 
     needs: [bump-version-generate-changelog, build-test-package]
 
-    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@users/alexander-smolyakov/issue53-rework-repo-checks
 
     with:
       sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
@@ -200,7 +207,7 @@ jobs:
 
     needs: [github-release]
 
-    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@users/alexander-smolyakov/issue53-rework-repo-checks
 
     with:
       version_number: ${{ inputs.version_number }}
@@ -212,7 +219,9 @@ jobs:
 
   slack-notification:
     name: Slack Notification
-    if: ${{ failure() }}
+    if: >-
+      ${{ failure() }} 
+      && ${{ inputs.test_run && inputs.nightly_release }}
 
     needs:
       [
@@ -222,7 +231,7 @@ jobs:
         pypi-release,
       ]
 
-    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@main
+    uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@users/alexander-smolyakov/issue53-rework-repo-checks
     with:
       status: "failure"
 
