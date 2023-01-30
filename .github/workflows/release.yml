@@ -138,6 +138,8 @@ jobs:
         run: exit 1
 
   bump-version-generate-changelog:
+    if: ${{ !failure() && !cancelled() }}
+
     name: Bump package version, Generate changelog
 
     uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@users/alexander-smolyakov/issue53-rework-repo-checks
@@ -221,7 +223,7 @@ jobs:
     name: Slack Notification
     if: >-
       ${{ failure() }} 
-      && ${{ inputs.test_run && inputs.nightly_release }}
+      && ${{ !inputs.test_run || inputs.nightly_release }}
 
     needs:
       [
