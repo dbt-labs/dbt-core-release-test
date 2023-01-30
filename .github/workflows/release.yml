@@ -221,9 +221,7 @@ jobs:
 
   slack-notification:
     name: Slack Notification
-    if: >-
-      ${{ failure() }} 
-      && ${{ !inputs.test_run || inputs.nightly_release }}
+    if: ${{ failure() && (!inputs.test_run || inputs.nightly_release) }}
 
     needs:
       [
