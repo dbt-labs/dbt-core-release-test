@@ -223,7 +223,7 @@ jobs:
     name: Slack Notification
     if: >-
       ${{ failure() }} 
-      && ${{ !inputs.test_run || !inputs.nightly_release }}
+      && ${{ !inputs.test_run && !inputs.nightly_release }}
 
     # needs:
     #   [
