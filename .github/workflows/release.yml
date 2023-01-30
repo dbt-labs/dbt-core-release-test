@@ -137,101 +137,101 @@ jobs:
       - name: "Fail release"
         run: exit 1
 
-  bump-version-generate-changelog:
-    if: ${{ !failure() && !cancelled() }}
+  # bump-version-generate-changelog:
+  #   if: ${{ !failure() && !cancelled() }}
 
-    name: Bump package version, Generate changelog
+  #   name: Bump package version, Generate changelog
 
-    uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@users/alexander-smolyakov/issue53-rework-repo-checks
+  #   uses: dbt-labs/dbt-release/.github/workflows/release-prep.yml@users/alexander-smolyakov/issue53-rework-repo-checks
 
-    with:
-      sha: ${{ inputs.sha }}
-      version_number: ${{ inputs.version_number }}
-      target_branch: ${{ inputs.target_branch }}
-      env_setup_script_path: ${{ inputs.env_setup_script_path }}
-      test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
+  #   with:
+  #     sha: ${{ inputs.sha }}
+  #     version_number: ${{ inputs.version_number }}
+  #     target_branch: ${{ inputs.target_branch }}
+  #     env_setup_script_path: ${{ inputs.env_setup_script_path }}
+  #     test_run: ${{ inputs.test_run }}
+  #     nightly_release: ${{ inputs.nightly_release }}
 
-    secrets:
-      FISHTOWN_BOT_PAT: ${{ secrets.FISHTOWN_BOT_PAT }}
+  #   secrets:
+  #     FISHTOWN_BOT_PAT: ${{ secrets.FISHTOWN_BOT_PAT }}
 
-  log-outputs-bump-version-generate-changelog:
-    name: "[Log output] Bump package version, Generate changelog"
-    if: ${{ !failure() && !cancelled() }}
+  # log-outputs-bump-version-generate-changelog:
+  #   name: "[Log output] Bump package version, Generate changelog"
+  #   if: ${{ !failure() && !cancelled() }}
 
-    needs: [bump-version-generate-changelog]
+  #   needs: [bump-version-generate-changelog]
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Print variables
-        run: |
-          echo Final SHA     : ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-          echo Changelog path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+  #   steps:
+  #     - name: Print variables
+  #       run: |
+  #         echo Final SHA     : ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+  #         echo Changelog path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
 
-  build-test-package:
-    name: Build, Test, Package
-    if: ${{ !failure() && !cancelled() }}
-    needs: [bump-version-generate-changelog]
+  # build-test-package:
+  #   name: Build, Test, Package
+  #   if: ${{ !failure() && !cancelled() }}
+  #   needs: [bump-version-generate-changelog]
 
-    uses: dbt-labs/dbt-release/.github/workflows/build.yml@users/alexander-smolyakov/issue53-rework-repo-checks
+  #   uses: dbt-labs/dbt-release/.github/workflows/build.yml@users/alexander-smolyakov/issue53-rework-repo-checks
 
-    with:
-      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-      version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-      build_script_path: ${{ inputs.build_script_path }}
-      s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      package_test_command: ${{ inputs.package_test_command }}
-      test_run: ${{ inputs.test_run }}
-      nightly_release: ${{ inputs.nightly_release }}
+  #   with:
+  #     sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+  #     version_number: ${{ inputs.version_number }}
+  #     changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+  #     build_script_path: ${{ inputs.build_script_path }}
+  #     s3_bucket_name: ${{ inputs.s3_bucket_name }}
+  #     package_test_command: ${{ inputs.package_test_command }}
+  #     test_run: ${{ inputs.test_run }}
+  #     nightly_release: ${{ inputs.nightly_release }}
 
-    secrets:
-      AWS_ACCESS_KEY_ID: ${{ secrets.PRODUCTION_AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.PRODUCTION_AWS_SECRET_ACCESS_KEY }}
+  #   secrets:
+  #     AWS_ACCESS_KEY_ID: ${{ secrets.PRODUCTION_AWS_ACCESS_KEY_ID }}
+  #     AWS_SECRET_ACCESS_KEY: ${{ secrets.PRODUCTION_AWS_SECRET_ACCESS_KEY }}
 
-  github-release:
-    name: GitHub Release
-    if: ${{ !failure() && !cancelled() }}
+  # github-release:
+  #   name: GitHub Release
+  #   if: ${{ !failure() && !cancelled() }}
 
-    needs: [bump-version-generate-changelog, build-test-package]
+  #   needs: [bump-version-generate-changelog, build-test-package]
 
-    uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@users/alexander-smolyakov/issue53-rework-repo-checks
+  #   uses: dbt-labs/dbt-release/.github/workflows/github-release.yml@users/alexander-smolyakov/issue53-rework-repo-checks
 
-    with:
-      sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
-      version_number: ${{ inputs.version_number }}
-      changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
-      test_run: ${{ inputs.test_run }}
+  #   with:
+  #     sha: ${{ needs.bump-version-generate-changelog.outputs.final_sha }}
+  #     version_number: ${{ inputs.version_number }}
+  #     changelog_path: ${{ needs.bump-version-generate-changelog.outputs.changelog_path }}
+  #     test_run: ${{ inputs.test_run }}
 
-  pypi-release:
-    name: PyPI Release
+  # pypi-release:
+  #   name: PyPI Release
 
-    needs: [github-release]
+  #   needs: [github-release]
 
-    uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@users/alexander-smolyakov/issue53-rework-repo-checks
+  #   uses: dbt-labs/dbt-release/.github/workflows/pypi-release.yml@users/alexander-smolyakov/issue53-rework-repo-checks
 
-    with:
-      version_number: ${{ inputs.version_number }}
-      test_run: ${{ inputs.test_run }}
+  #   with:
+  #     version_number: ${{ inputs.version_number }}
+  #     test_run: ${{ inputs.test_run }}
 
-    secrets:
-      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-      TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+  #   secrets:
+  #     PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+  #     TEST_PYPI_API_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
 
   slack-notification:
     name: Slack Notification
     if: >-
       ${{ failure() }} 
-      && ${{ !inputs.test_run || inputs.nightly_release }}
+      && ${{ !inputs.test_run || !inputs.nightly_release }}
 
-    needs:
-      [
-        bump-version-generate-changelog,
-        build-test-package,
-        github-release,
-        pypi-release,
-      ]
+    # needs:
+    #   [
+    #     bump-version-generate-changelog,
+    #     build-test-package,
+    #     github-release,
+    #     pypi-release,
+    #   ]
 
     uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@users/alexander-smolyakov/issue53-rework-repo-checks
     with:
