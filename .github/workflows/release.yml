@@ -225,13 +225,10 @@ jobs:
       ${{ failure() }} 
       && ${{ !inputs.test_run && !inputs.nightly_release }}
 
-    # needs:
-    #   [
-    #     bump-version-generate-changelog,
-    #     build-test-package,
-    #     github-release,
-    #     pypi-release,
-    #   ]
+    needs:
+      [
+        fail-release
+      ]
 
     uses: dbt-labs/dbt-release/.github/workflows/slack-post-notification.yml@users/alexander-smolyakov/issue53-rework-repo-checks
     with:
